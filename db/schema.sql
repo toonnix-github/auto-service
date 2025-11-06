@@ -31,14 +31,21 @@ CREATE TABLE IF NOT EXISTS goods (
 );
 CREATE INDEX IF NOT EXISTS idx_goods_sku ON goods(sku);
 
--- parts (details; only for goods that are actual parts)
+-- parts (catalog specific to vehicle parts)
 CREATE TABLE IF NOT EXISTS parts (
-  id TEXT PRIMARY KEY REFERENCES goods(id), -- same id as goods.id
+  id TEXT PRIMARY KEY,
+  sku TEXT UNIQUE,
+  name TEXT NOT NULL,
+  default_price REAL NOT NULL,
+  taxable INTEGER NOT NULL DEFAULT 1,
+  active INTEGER NOT NULL DEFAULT 1,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
   manufacturer TEXT,
   part_number TEXT,
-  compatible_models TEXT,                   -- CSV or JSON
+  compatible_models TEXT,
   spec TEXT
 );
+CREATE INDEX IF NOT EXISTS idx_parts_sku ON parts(sku);
 
 -- services (labor/service catalog)
 CREATE TABLE IF NOT EXISTS services (

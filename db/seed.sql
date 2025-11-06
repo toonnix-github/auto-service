@@ -1,5 +1,11 @@
-DELETE FROM order_items; DELETE FROM payments; DELETE FROM orders;
-DELETE FROM vehicles; DELETE FROM customers; DELETE FROM parts; DELETE FROM goods; DELETE FROM services;
+DELETE FROM order_items;
+DELETE FROM payments;
+DELETE FROM orders;
+DELETE FROM vehicles;
+DELETE FROM customers;
+DELETE FROM parts;
+DELETE FROM goods;
+DELETE FROM services;
 
 -- customers
 INSERT INTO customers(id,name,phone,email) VALUES
@@ -13,11 +19,10 @@ INSERT INTO vehicles(id,customer_id,brand,model,license_plate,odometer) VALUES
 
 -- goods
 INSERT INTO goods(id,sku,name,type,default_price,taxable,active) VALUES
-  ('g_oil_1','OIL-5W30','Engine Oil 5W-30','oil',800,1,1),
-  ('g_part_1','PART-AIRFLT','Air Filter','part',450,1,1);
+  ('g_oil_1','OIL-5W30','Engine Oil 5W-30','oil',800,1,1);
 
-INSERT INTO parts(id,manufacturer,part_number,compatible_models,spec) VALUES
-  ('g_part_1','Denso','AF-1234','Toyota Vios 2007-2013','Paper filter');
+INSERT INTO parts(id,sku,name,default_price,taxable,active,manufacturer,part_number,compatible_models,spec) VALUES
+  ('p_air_filter','PART-AIRFLT','Air Filter',450,1,1,'Denso','AF-1234','Toyota Vios 2007-2013','Paper filter');
 
 -- services
 INSERT INTO services(id,code,name,category,default_price,taxable,duration_minutes,active) VALUES
@@ -26,10 +31,9 @@ INSERT INTO services(id,code,name,category,default_price,taxable,duration_minute
 
 -- orders
 INSERT INTO orders(id,order_no,date,customer_id,vehicle_id,status,vat_rate,subtotal,vat,total,notes,tech_note) VALUES
-  ('o1','SO-202511-0001','2025-11-06','c1','v1','open',0.07,1750,122.5,1872.5,'น้ำมันเครื่อง+ไส้กรอง+บริการ','ตรวจรอยรั่ว');
+  ('o1','SO-202511-0001','2025-11-06','c1','v1','open',0.07,1300,91,1391,'น้ำมันเครื่อง+บริการ','ตรวจรอยรั่ว');
 
 -- order_items (mix goods + services)
 INSERT INTO order_items(id,order_id,no,goods_id,service_id,type,name_snapshot,unit_price,qty,line_total) VALUES
   ('i1','o1',1,'g_oil_1',NULL,'goods','Engine Oil 5W-30',800,1,800),
-  ('i2','o1',2,'g_part_1',NULL,'goods','Air Filter',450,1,450),
-  ('i3','o1',3,NULL,'s_srv_1','service','Change Engine Oil',500,1,500);
+  ('i2','o1',2,NULL,'s_srv_1','service','Change Engine Oil',500,1,500);
