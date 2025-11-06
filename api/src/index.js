@@ -3,6 +3,7 @@ import { cors } from 'hono/cors'
 import { createPartRoutes } from './routes/parts'
 import { createCustomerRoutes } from './routes/customers'
 import { createVehicleRoutes } from './routes/vehicles'
+import { createServiceRoutes } from './routes/services'
 
 const app = new Hono()
 
@@ -53,7 +54,7 @@ app.get('/api/orders/:id', async (c) => {
   const id = c.req.param('id')
 
   const orderSql = `
-    SELECT o.*, c.name AS customer_name, c.phone, v.brand, v.model, v.license_plate, v.odometer
+    SELECT o.*, c.name AS customer_name, c.phone, v.brand, v.model, v.license_plate
     FROM orders o
     JOIN customers c ON c.id = o.customer_id
     JOIN vehicles v ON v.id = o.vehicle_id
@@ -71,5 +72,6 @@ app.get('/api/orders/:id', async (c) => {
 app.route('/api/customers', createCustomerRoutes())
 app.route('/api/vehicles', createVehicleRoutes())
 app.route('/api/parts', createPartRoutes())
+app.route('/api/services', createServiceRoutes())
 
 export default app
