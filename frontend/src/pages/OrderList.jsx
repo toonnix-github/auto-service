@@ -60,8 +60,12 @@ export default function OrdersList() {
       minWidth: 120,
       align: 'right',
       headerAlign: 'right',
-      valueFormatter: ({ value }) =>
-        Number(value ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+      renderCell: (p) => {
+        const v = Number(p.row.total)
+        return Number.isFinite(v)
+          ? v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+          : '-'
+      },
     },
 
     // Action (View)
