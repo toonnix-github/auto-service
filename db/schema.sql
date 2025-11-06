@@ -14,7 +14,6 @@ CREATE TABLE IF NOT EXISTS vehicles (
   brand TEXT,
   model TEXT,
   license_plate TEXT NOT NULL,
-  odometer INTEGER DEFAULT 0,
   created_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -60,6 +59,7 @@ CREATE TABLE IF NOT EXISTS orders (
   date TEXT NOT NULL,
   customer_id TEXT NOT NULL REFERENCES customers(id),
   vehicle_id TEXT NOT NULL REFERENCES vehicles(id),
+  odometer INTEGER,
   status TEXT NOT NULL DEFAULT 'open',      -- open|draft|in_progress|ready|closed|cancelled
   vat_rate REAL NOT NULL DEFAULT 0.07,
   subtotal REAL NOT NULL DEFAULT 0,

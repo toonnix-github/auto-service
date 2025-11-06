@@ -56,6 +56,13 @@ export default function OrderDetail() {
 
   const order = data?.order
   const items = data?.items ?? []
+  const odometerValue = order?.odometer
+  const formattedOdometer = odometerValue === null || odometerValue === undefined
+    ? null
+    : (() => {
+        const num = Number(odometerValue)
+        return Number.isFinite(num) ? num.toLocaleString() : String(odometerValue)
+      })()
 
   return (
     <Stack spacing={2}>
@@ -86,6 +93,9 @@ export default function OrderDetail() {
               <>
                 <Typography>{order.brand} {order.model}</Typography>
                 <Typography variant="body2">{order.license_plate}</Typography>
+                {formattedOdometer ? (
+                  <Typography variant="body2">Odometer: {formattedOdometer}</Typography>
+                ) : null}
               </>
             )}
           </Card>

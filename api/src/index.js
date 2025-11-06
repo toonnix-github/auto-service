@@ -53,7 +53,7 @@ app.get('/api/orders/:id', async (c) => {
   const id = c.req.param('id')
 
   const orderSql = `
-    SELECT o.*, c.name AS customer_name, c.phone, v.brand, v.model, v.license_plate, v.odometer
+    SELECT o.*, c.name AS customer_name, c.phone, v.brand, v.model, v.license_plate
     FROM orders o
     JOIN customers c ON c.id = o.customer_id
     JOIN vehicles v ON v.id = o.vehicle_id
