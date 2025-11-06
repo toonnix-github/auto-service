@@ -4,6 +4,8 @@ import OrdersList from './pages/OrderList'
 import OrderDetail from './pages/OrderDetail'
 import VehicleList from './pages/VehicleList'
 import VehicleDetail from './pages/VehicleDetail'
+import CustomerList from './pages/CustomerList'
+import CustomerDetail from './pages/CustomerDetail'
 
 export default function App() {
   return (
@@ -20,6 +22,9 @@ export default function App() {
             <Button color="inherit" component={Link} to="/vehicle">
               Vehicles
             </Button>
+            <Button color="inherit" component={Link} to="/customer">
+              Customers
+            </Button>
           </Stack>
         </Toolbar>
       </AppBar>
@@ -30,6 +35,8 @@ export default function App() {
           <Route path="/order/:id" element={<OrderDetail />} />
           <Route path="/vehicle" element={<VehicleList />} />
           <Route path="/vehicle/:id" element={<VehicleDetail />} />
+          <Route path="/customer" element={<CustomerList />} />
+          <Route path="/customer/:id" element={<CustomerDetail />} />
           <Route path="*" element={<OrdersList />} />
         </Routes>
       </Container>

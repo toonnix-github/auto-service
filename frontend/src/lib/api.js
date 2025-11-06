@@ -48,3 +48,20 @@ export const Vehicles = {
   }),
   remove: (id) => api(`/vehicles/${id}`, { method: 'DELETE' }),
 }
+
+export const Customers = {
+  list: (params = {}) => {
+    const qs = new URLSearchParams(params).toString()
+    return api(`/customers${qs ? `?${qs}` : ''}`)
+  },
+  get: (id) => api(`/customers/${id}`),
+  create: (payload) => api('/customers', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  }),
+  update: (id, payload) => api(`/customers/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  }),
+  remove: (id) => api(`/customers/${id}`, { method: 'DELETE' }),
+}
