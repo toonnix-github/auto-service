@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { createPartRoutes } from './routes/parts'
+import { createCustomerRoutes } from './routes/customers'
 import { createVehicleRoutes } from './routes/vehicles'
 
 const app = new Hono()
@@ -67,6 +68,7 @@ app.get('/api/orders/:id', async (c) => {
   return c.json({ order, items })
 })
 
+app.route('/api/customers', createCustomerRoutes())
 app.route('/api/vehicles', createVehicleRoutes())
 app.route('/api/parts', createPartRoutes())
 
