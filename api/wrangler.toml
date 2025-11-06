@@ -1,0 +1,13 @@
+name = "auto-service-api"
+main = "src/index.js"
+compatibility_date = "2024-12-01"
+
+[[d1_databases]]
+"binding" = "auto_service_db"
+"database_name" = "auto_service_db"
+"database_id" = "070b3d11-f5c2-4645-8531-e64291733182"
+
+[vars]
+# set this later to your Pages origin, e.g., https://<yourapp>.pages.dev
+CORS_ORIGIN = "*"
+

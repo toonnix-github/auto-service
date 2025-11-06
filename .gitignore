@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.vite/
+.wrangler/
+.env*
+frontend/.env.local
+api/.dev.vars
