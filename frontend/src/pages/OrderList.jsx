@@ -1,7 +1,7 @@
 // frontend/src/pages/OrdersList.jsx
 import React, { useEffect, useMemo, useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { Box, Card, Stack, TextField, Button, Typography } from '@mui/material'
+import { Box, Card, Stack, TextField, Button, Typography, Chip } from '@mui/material'
 import { DataGrid } from '@mui/x-data-grid'
 import { Orders } from '../lib/api'
 
@@ -40,6 +40,16 @@ export default function OrdersList() {
         const brandModel = `${r.brand ?? ''} ${r.model ?? ''}`.trim()
         return [brandModel, r.license_plate].filter(Boolean).join(' – ')
       }
+    },
+
+    // Status
+    {
+      field: 'status',
+      headerName: 'Status',
+      flex: 0.6,
+      minWidth: 120,
+      renderCell: ({ value }) => value ? <Chip size="small" color="info" label={value} /> : '—',
+      sortable: false,
     },
 
     // Price (Total)
