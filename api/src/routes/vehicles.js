@@ -10,7 +10,7 @@ const ensureVehiclesTable = async (db) => {
 
 const fetchVehicleById = async (db, id) => {
   const sql = `
-    SELECT v.id, v.customer_id, v.brand, v.model, v.license_plate, v.odometer, v.created_at,
+    SELECT v.id, v.customer_id, v.brand, v.model, v.license_plate, v.created_at,
            c.name AS customer_name, c.phone AS customer_phone
     FROM vehicles v
     JOIN customers c ON c.id = v.customer_id
@@ -52,7 +52,7 @@ export const createVehicleRoutes = () => {
     const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : ''
 
     const sql = `
-      SELECT v.id, v.customer_id, v.brand, v.model, v.license_plate, v.odometer, v.created_at,
+      SELECT v.id, v.customer_id, v.brand, v.model, v.license_plate, v.created_at,
              c.name AS customer_name, c.phone AS customer_phone
       FROM vehicles v
       JOIN customers c ON c.id = v.customer_id
@@ -85,7 +85,7 @@ export const createVehicleRoutes = () => {
       return c.json({ message: 'Invalid JSON payload' }, 400)
     }
 
-    const { customerId, brand, model, licensePlate, odometer = 0 } = payload || {}
+    const { customerId, brand, model, licensePlate } = payload || {}
 
     if (!customerId || !licensePlate) {
       return c.json({ message: 'customerId and licensePlate are required' }, 400)
@@ -95,12 +95,12 @@ export const createVehicleRoutes = () => {
 
     try {
       const stmt = `
-        INSERT INTO vehicles (id, customer_id, brand, model, license_plate, odometer)
-        VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO vehicles (id, customer_id, brand, model, license_plate)
+        VALUES (?, ?, ?, ?, ?)
       `
       await c.env.auto_service_db
         .prepare(stmt)
-        .bind(id, customerId, brand ?? null, model ?? null, licensePlate, odometer ?? 0)
+        .bind(id, customerId, brand ?? null, model ?? null, licensePlate)
         .run()
     } catch (error) {
       return c.json({ message: 'Failed to create vehicle', details: error.message }, 400)
@@ -129,7 +129,6 @@ export const createVehicleRoutes = () => {
       brand: payload?.brand,
       model: payload?.model,
       license_plate: payload?.licensePlate,
-      odometer: payload?.odometer,
     }
 
     const setClauses = []

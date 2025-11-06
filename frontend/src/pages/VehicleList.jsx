@@ -1,19 +1,20 @@
-// frontend/src/pages/OrdersList.jsx
+// frontend/src/pages/VehicleList.jsx
 import React, { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Box, Card, Stack, TextField, Button, Typography, Chip } from '@mui/material'
+import { Box, Button, Card, Stack, TextField, Typography } from '@mui/material'
 import { DataGrid } from '@mui/x-data-grid'
-import { Orders } from '../lib/api'
+import { Vehicles } from '../lib/api'
 
-export default function OrdersList() {
+export default function VehicleList() {
   const [rows, setRows] = useState([])
   const [q, setQ] = useState('')
   const [loading, setLoading] = useState(false)
+
   const load = async () => {
     setLoading(true)
     try {
-      const data = await Orders.list(q ? { q } : {})
-      setRows((data.rows || []).map(r => ({ ...r })))
+      const data = await Vehicles.list(q ? { q } : {})
+      setRows((data?.rows ?? []).map(row => ({ ...row })))
     } finally {
       setLoading(false)
     }
@@ -22,62 +23,37 @@ export default function OrdersList() {
   useEffect(() => { load() }, [])
 
   const columns = useMemo(() => ([
-    // Date
-    { field: 'date', headerName: 'Date', flex: 0.6, minWidth: 110 },
-
-    // Customer
-    { field: 'customer_name', headerName: 'Customer', flex: 1.0, minWidth: 160 },
-
-    // Car (Brand – Model – Plate)
+    { field: 'license_plate', headerName: 'License Plate', flex: 0.8, minWidth: 140 },
+    { field: 'brand', headerName: 'Brand', flex: 0.7, minWidth: 120 },
+    { field: 'model', headerName: 'Model', flex: 0.9, minWidth: 160 },
     {
-      field: 'vehicle',
-      headerName: 'Car (Brand – Model – Plate)',
-      flex: 1.4,
-      minWidth: 240,
-      valueGetter: (_, r) => {
-        const brandModel = `${r.brand ?? ''} ${r.model ?? ''}`.trim()
-        return [brandModel, r.license_plate].filter(Boolean).join(' – ')
-      }
-    },
-
-    // Status
-    {
-      field: 'status',
-      headerName: 'Status',
-      flex: 0.6,
-      minWidth: 120,
-      renderCell: ({ value }) => value ? <Chip size="small" color="info" label={value} /> : '—',
-      sortable: false,
-    },
-
-    // Price (Total)
-    {
-      field: 'total',
-      headerName: 'Price',
-      flex: 0.6,
-      minWidth: 120,
-      align: 'right',
-      headerAlign: 'right',
-      renderCell: (p) => {
-        const v = Number(p.row.total)
-        return Number.isFinite(v)
-          ? v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-          : '-'
+      field: 'customer',
+      headerName: 'Customer',
+      flex: 1.0,
+      minWidth: 200,
+      valueGetter: (_, row) => {
+        const name = row.customer_name ?? ''
+        const phone = row.customer_phone ?? ''
+        return [name, phone].filter(Boolean).join(' – ')
       },
     },
-
-    // Action (View)
     {
-      field: 'action',
+      field: 'created_at',
+      headerName: 'Created',
+      flex: 0.8,
+      minWidth: 160,
+    },
+    {
+      field: 'actions',
       headerName: '',
-      flex: 0.4,
-      minWidth: 100,
+      flex: 0.5,
+      minWidth: 120,
       sortable: false,
       filterable: false,
       renderCell: (params) => (
         <Button
           component={Link}
-          to={`/order/${params.row.id}`}
+          to={`/vehicle/${params.row.id}`}
           size="small"
           variant="outlined"
         >
@@ -90,19 +66,19 @@ export default function OrdersList() {
   return (
     <Stack spacing={2}>
       <Stack direction="row" justifyContent="space-between" alignItems="center">
-        <Typography variant="h5" fontWeight={600}>Orders</Typography>
-        <Button component={Link} to="/vehicle" variant="outlined">
-          View vehicles
+        <Typography variant="h5" fontWeight={600}>Vehicles</Typography>
+        <Button component={Link} to="/vehicle/new" variant="contained">
+          + New vehicle
         </Button>
       </Stack>
 
       <Stack direction="row" spacing={1}>
         <TextField
-          placeholder="Search by order no / customer / phone / plate"
+          placeholder="Search by license plate / customer / phone"
           value={q}
           onChange={(e) => setQ(e.target.value)}
           size="small"
-          sx={{ width: 420 }}
+          sx={{ width: 360 }}
         />
         <Button onClick={load} disabled={loading} variant="contained">
           {loading ? 'Loading…' : 'Search'}
@@ -129,10 +105,11 @@ export default function OrdersList() {
             loading={loading}
             disableRowSelectionOnClick
             density="standard"
+            getRowId={(row) => row.id}
             pageSizeOptions={[10, 25, 50]}
             initialState={{
               pagination: { paginationModel: { pageSize: 10, page: 0 } },
-              sorting: { sortModel: [{ field: 'date', sort: 'desc' }] },
+              sorting: { sortModel: [{ field: 'created_at', sort: 'desc' }] },
             }}
             sx={{
               borderRadius: 2,
