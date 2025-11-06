@@ -10,10 +10,8 @@ const ensureGoodsTable = async (db) => {
 
 const fetchGoodsById = async (db, id) => {
   const sql = `
-    SELECT g.id, g.sku, g.name, g.type, g.default_price, g.taxable, g.active, g.created_at,
-           p.manufacturer, p.part_number, p.compatible_models, p.spec
+    SELECT g.id, g.sku, g.name, g.type, g.default_price, g.taxable, g.active, g.created_at
     FROM goods g
-    LEFT JOIN parts p ON p.id = g.id
     WHERE g.id = ?
   `
   return db.prepare(sql).bind(id).first()
@@ -31,7 +29,7 @@ const parseActiveParam = (value) => {
   return undefined
 }
 
-const GOODS_TYPES = new Set(['oil', 'tire', 'part', 'other'])
+const GOODS_TYPES = new Set(['oil', 'tire', 'other'])
 
 export const createGoodsRoutes = () => {
   const goods = new Hono()
@@ -65,17 +63,15 @@ export const createGoodsRoutes = () => {
     }
 
     if (q) {
-      where.push('(g.sku LIKE ? OR g.name LIKE ? OR g.type LIKE ? OR p.manufacturer LIKE ? OR p.part_number LIKE ?)')
-      params.push(`%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`)
+      where.push('(g.sku LIKE ? OR g.name LIKE ? OR g.type LIKE ?)')
+      params.push(`%${q}%`, `%${q}%`, `%${q}%`)
     }
 
     const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : ''
 
     const sql = `
-      SELECT g.id, g.sku, g.name, g.type, g.default_price, g.taxable, g.active, g.created_at,
-             p.manufacturer, p.part_number, p.compatible_models, p.spec
+      SELECT g.id, g.sku, g.name, g.type, g.default_price, g.taxable, g.active, g.created_at
       FROM goods g
-      LEFT JOIN parts p ON p.id = g.id
       ${whereSql}
       ORDER BY g.created_at DESC, g.name ASC
     `
@@ -104,7 +100,7 @@ export const createGoodsRoutes = () => {
       return c.json({ message: 'Invalid JSON payload' }, 400)
     }
 
-    const { sku, name, type, defaultPrice, taxable = true, active = true, part } = payload || {}
+    const { sku, name, type, defaultPrice, taxable = true, active = true } = payload || {}
 
     if (!name || !type || defaultPrice === undefined) {
       return c.json({ message: 'name, type, and defaultPrice are required' }, 400)
@@ -112,10 +108,6 @@ export const createGoodsRoutes = () => {
 
     if (!GOODS_TYPES.has(type)) {
       return c.json({ message: `type must be one of: ${Array.from(GOODS_TYPES).join(', ')}` }, 400)
-    }
-
-    if (part && type !== 'part') {
-      return c.json({ message: 'Part details can only be provided when type is "part"' }, 400)
     }
 
     const numericPrice = Number(defaultPrice)
@@ -136,26 +128,6 @@ export const createGoodsRoutes = () => {
         .run()
     } catch (error) {
       return c.json({ message: 'Failed to create goods item', details: error.message }, 400)
-    }
-
-    if (type === 'part') {
-      const manufacturer = part?.manufacturer ?? null
-      const partNumber = part?.partNumber ?? null
-      const compatibleModels = part?.compatibleModels ?? null
-      const spec = part?.spec ?? null
-      try {
-        await c.env.auto_service_db
-          .prepare(
-            `INSERT INTO parts (id, manufacturer, part_number, compatible_models, spec)
-             VALUES (?, ?, ?, ?, ?)
-             ON CONFLICT(id) DO UPDATE SET manufacturer=excluded.manufacturer, part_number=excluded.part_number,
-             compatible_models=excluded.compatible_models, spec=excluded.spec`
-          )
-          .bind(id, manufacturer, partNumber, compatibleModels, spec)
-          .run()
-      } catch (error) {
-        return c.json({ message: 'Failed to save part details', details: error.message }, 400)
-      }
     }
 
     const item = await fetchGoodsById(c.env.auto_service_db, id)
@@ -182,12 +154,6 @@ export const createGoodsRoutes = () => {
 
     if (payload?.defaultPrice !== undefined && Number.isNaN(Number(payload.defaultPrice))) {
       return c.json({ message: 'defaultPrice must be a number' }, 400)
-    }
-
-    const nextType = payload?.type ?? existing.type
-
-    if (payload?.part && nextType !== 'part') {
-      return c.json({ message: 'Part details can only be provided when type is "part"' }, 400)
     }
 
     const fields = {
@@ -220,38 +186,6 @@ export const createGoodsRoutes = () => {
       }
     }
 
-    const typeChangedAwayFromPart = existing.type === 'part' && nextType !== 'part'
-
-    if (nextType === 'part' && payload?.part !== null) {
-      const manufacturer =
-        payload?.part === undefined ? existing.manufacturer ?? null : payload.part?.manufacturer ?? null
-      const partNumber =
-        payload?.part === undefined ? existing.part_number ?? null : payload.part?.partNumber ?? null
-      const compatibleModels =
-        payload?.part === undefined ? existing.compatible_models ?? null : payload.part?.compatibleModels ?? null
-      const spec = payload?.part === undefined ? existing.spec ?? null : payload.part?.spec ?? null
-
-      try {
-        await c.env.auto_service_db
-          .prepare(
-            `INSERT INTO parts (id, manufacturer, part_number, compatible_models, spec)
-             VALUES (?, ?, ?, ?, ?)
-             ON CONFLICT(id) DO UPDATE SET manufacturer=excluded.manufacturer, part_number=excluded.part_number,
-             compatible_models=excluded.compatible_models, spec=excluded.spec`
-          )
-          .bind(id, manufacturer, partNumber, compatibleModels, spec)
-          .run()
-      } catch (error) {
-        return c.json({ message: 'Failed to update part details', details: error.message }, 400)
-      }
-    } else if (payload?.part === null || typeChangedAwayFromPart) {
-      try {
-        await c.env.auto_service_db.prepare('DELETE FROM parts WHERE id = ?').bind(id).run()
-      } catch (error) {
-        return c.json({ message: 'Failed to remove part details', details: error.message }, 400)
-      }
-    }
-
     const item = await fetchGoodsById(c.env.auto_service_db, id)
     return c.json({ goods: item })
   })
@@ -262,7 +196,6 @@ export const createGoodsRoutes = () => {
     const id = c.req.param('id')
 
     try {
-      await c.env.auto_service_db.prepare('DELETE FROM parts WHERE id = ?').bind(id).run()
       const result = await c.env.auto_service_db.prepare('DELETE FROM goods WHERE id = ?').bind(id).run()
       const changes = typeof result.meta?.changes === 'number' ? result.meta.changes : result.success ? 1 : 0
       if (!changes) return c.notFound()

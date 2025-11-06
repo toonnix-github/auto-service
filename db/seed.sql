@@ -11,13 +11,14 @@ INSERT INTO vehicles(id,customer_id,brand,model,license_plate) VALUES
   ('v1','c1','Toyota','Vios 1.5','กข-1234'),
   ('v2','c2','Honda','City 1.5','ขค-5678');
 
--- goods
 INSERT INTO goods(id,sku,name,type,default_price,taxable,active) VALUES
   ('g_oil_1','OIL-5W30','Engine Oil 5W-30','oil',800,1,1),
-  ('g_part_1','PART-AIRFLT','Air Filter','part',450,1,1);
+  ('g_clean_1','CLEAN-SHAMPOO','Car Shampoo','other',280,1,1);
 
-INSERT INTO parts(id,manufacturer,part_number,compatible_models,spec) VALUES
-  ('g_part_1','Denso','AF-1234','Toyota Vios 2007-2013','Paper filter');
+-- parts
+INSERT INTO parts(id,sku,name,type,default_price,taxable,active,manufacturer,part_number,compatible_models,spec) VALUES
+  ('p_air_filter','PART-AIRFLT','Air Filter','engine',450,1,1,'Denso','AF-1234','Toyota Vios 2007-2013','Paper filter'),
+  ('p_side_mirror','PART-SDMIR','Side Mirror','body',1250,1,1,'Toyota','SDM-908','Toyota Vios 2012-2015','Right-hand side');
 
 -- services
 INSERT INTO services(id,code,name,category,default_price,taxable,duration_minutes,active) VALUES
@@ -31,5 +32,4 @@ INSERT INTO orders(id,order_no,date,customer_id,vehicle_id,odometer,status,vat_r
 -- order_items (mix goods + services)
 INSERT INTO order_items(id,order_id,no,goods_id,service_id,type,name_snapshot,unit_price,qty,line_total) VALUES
   ('i1','o1',1,'g_oil_1',NULL,'goods','Engine Oil 5W-30',800,1,800),
-  ('i2','o1',2,'g_part_1',NULL,'goods','Air Filter',450,1,450),
-  ('i3','o1',3,NULL,'s_srv_1','service','Change Engine Oil',500,1,500);
+  ('i2','o1',2,NULL,'s_srv_1','service','Change Engine Oil',500,1,500);
