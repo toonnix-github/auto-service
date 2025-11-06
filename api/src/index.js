@@ -8,6 +8,16 @@ app.use('*', cors({ origin: '*', allowHeaders: ['Content-Type'] }))
 // Health
 app.get('/api/health', (c) => c.json({ ok: true }))
 
+// Info
+app.get('/api/info', (c) =>
+  c.json({
+    name: 'Auto Service API',
+    version: '1.0.1',
+    environment: c.env.CORS_ORIGIN || 'local',
+    timestamp: new Date().toISOString(),
+  })
+)
+
 // List orders (simple; seeded data)
 app.get('/api/orders', async (c) => {
   const { q = '' } = c.req.query()
