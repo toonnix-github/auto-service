@@ -1,0 +1,12 @@
+body {
+  background: linear-gradient(to bottom right, #f3f6ff, #ffffff);
+}
+
+.MuiPaper-root {
+  border-radius: 0;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}

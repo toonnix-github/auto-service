@@ -1,48 +1,182 @@
-import React, { useEffect, useState } from 'react'
+// frontend/src/pages/OrderDetail.jsx
+import React, { useEffect, useMemo, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { Orders } from '../lib/api'
+import { Box, Card, Stack, Typography, Chip, Button, Grid, CircularProgress } from '@mui/material'
+import { DataGrid } from '@mui/x-data-grid'
 
-export default function OrderDetail(){
+export default function OrderDetail() {
   const { id } = useParams()
   const [data, setData] = useState(null)
+  const loading = !data
+
+  // ✅ Always declare hooks in the same order (no early returns before hooks)
+  const columns = useMemo(() => ([
+    { field: 'no', headerName: '#', flex: 0.35, minWidth: 60 },
+    {
+      field: 'type',
+      headerName: 'Type',
+      flex: 0.6,
+      minWidth: 90,
+      renderCell: (p) => <Chip size="small" label={p.value} variant="outlined" />,
+    },
+    { field: 'name_snapshot', headerName: 'Name', flex: 1.4, minWidth: 220 },
+    {
+      field: 'unit_price',
+      headerName: 'Price per Unit',
+      flex: 0.7,
+      minWidth: 100,
+      align: 'right',
+      headerAlign: 'right',
+      renderCell: (p) => {
+        const v = Number(p.row.unit_price)
+        return Number.isFinite(v)
+          ? v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+          : '-'
+      },
+    },
+    { field: 'qty', headerName: 'Qty', flex: 0.5, minWidth: 80, align: 'right', headerAlign: 'right' },
+    {
+      field: 'line_total',
+      headerName: 'Total',
+      flex: 0.8,
+      minWidth: 110,
+      align: 'right',
+      headerAlign: 'right',
+      renderCell: (p) => {
+        const v = Number(p.row.unit_price)
+        return Number.isFinite(v)
+          ? v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+          : '-'
+      },
+    },
+  ]), [])
 
   useEffect(() => { Orders.get(id).then(setData) }, [id])
-  if(!data) return <div>Loading...</div>
 
-  const { order, items } = data
+  const order = data?.order
+  const items = data?.items ?? []
+
   return (
-    <div>
-      <h2>Order {order.order_no}</h2>
-      <p><b>Date:</b> {order.date}</p>
-      <p><b>Customer:</b> {order.customer_name} ({order.phone})</p>
-      <p><b>Vehicle:</b> {order.brand} {order.model} — {order.license_plate}</p>
-      <p><b>Status:</b> {order.status}</p>
+    <Stack spacing={2}>
+      <Stack direction="row" justifyContent="space-between" alignItems="center">
+        <Typography variant="h5" fontWeight={600}>
+          {order ? `Order ${order.order_no}` : 'Order'}
+        </Typography>
+        <Button component={Link} to="/order" variant="outlined">← Back to list</Button>
+      </Stack>
 
-      <h3>Items</h3>
-      <table border="1" cellPadding="6" style={{ width:'100%', borderCollapse:'collapse' }}>
-        <thead>
-          <tr><th>No</th><th>Type</th><th>Name</th><th>Unit</th><th>Qty</th><th>Total</th></tr>
-        </thead>
-        <tbody>
-          {items.map(it => (
-            <tr key={it.id}>
-              <td>{it.no}</td>
-              <td>{it.type}</td>
-              <td>{it.name_snapshot}</td>
-              <td style={{ textAlign:'right' }}>{Number(it.unit_price).toFixed(2)}</td>
-              <td style={{ textAlign:'right' }}>{it.qty}</td>
-              <td style={{ textAlign:'right' }}>{Number(it.line_total).toFixed(2)}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      {/* Top info cards */}
+      <Grid container spacing={2}>
+        <Grid item xs={12} md={4}>
+          <Card sx={{ p: 2, minHeight: 96 }}>
+            <Typography variant="subtitle2" color="text.secondary">Customer</Typography>
+            {loading ? <SkeletonLine /> : (
+              <>
+                <Typography fontWeight={600}>{order.customer_name}</Typography>
+                <Typography variant="body2">{order.phone}</Typography>
+              </>
+            )}
+          </Card>
+        </Grid>
+        <Grid item xs={12} md={4}>
+          <Card sx={{ p: 2, minHeight: 96 }}>
+            <Typography variant="subtitle2" color="text.secondary">Vehicle</Typography>
+            {loading ? <SkeletonLine /> : (
+              <>
+                <Typography>{order.brand} {order.model}</Typography>
+                <Typography variant="body2">{order.license_plate}</Typography>
+              </>
+            )}
+          </Card>
+        </Grid>
+        <Grid item xs={12} md={4}>
+          <Card sx={{ p: 2, minHeight: 96 }}>
+            <Typography variant="subtitle2" color="text.secondary">Status</Typography>
+            {loading ? <SkeletonLine /> : (
+              <>
+                <Chip color="info" label={order.status} />
+                <Typography variant="body2" sx={{ mt: 1 }}>Date: {order.date}</Typography>
+              </>
+            )}
+          </Card>
+        </Grid>
+      </Grid>
 
-      <h3>Totals</h3>
-      <p>Subtotal: {Number(order.subtotal).toFixed(2)} | VAT: {Number(order.vat).toFixed(2)} | Total: {Number(order.total).toFixed(2)}</p>
+      {/* Items grid */}
+      <Card sx={{ p: 2 }}>
+        <Typography variant="h6" sx={{ mb: 1 }}>Items</Typography>
 
-      <div style={{ marginTop:12 }}>
-        <Link to="/order">← Back to list</Link>
-      </div>
-    </div>
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
+            <CircularProgress size={28} />
+          </Box>
+        ) : (
+          <Box
+            sx={{
+              width: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              '& .MuiDataGrid-root': { flex: 1, minWidth: 0 },
+              '& .MuiDataGrid-main': { flex: 1, overflow: 'hidden' },
+              '& .MuiDataGrid-virtualScroller': { overflowY: 'auto', overflowX: 'auto' },
+              '& .MuiDataGrid-virtualScrollerContent': { minWidth: '100%' },
+              '& .MuiDataGrid-columnHeaders': { backgroundColor: '#f2f6ff' },
+            }}
+          >
+            <DataGrid
+              rows={items}
+              getRowId={(r) => r.id}
+              columns={columns}
+              hideFooterSelectedRowCount
+              disableRowSelectionOnClick
+              density="compact"
+              pageSizeOptions={[10]}
+              initialState={{
+                pagination: { paginationModel: { pageSize: 10, page: 0 } },
+              }}
+              sx={{
+                borderRadius: 2,
+                flex: 1,
+                '& .MuiDataGrid-cell': {
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                },
+              }}
+            />
+          </Box>
+        )}
+
+        {/* Totals */}
+        <Stack direction="row" spacing={4} justifyContent="flex-end" sx={{ mt: 2 }}>
+          <TotalBlock label="Subtotal" value={order?.subtotal} loading={loading} />
+          <TotalBlock label="VAT" value={order?.vat} loading={loading} />
+          <TotalBlock label="Total" value={order?.total} loading={loading} strong />
+        </Stack>
+      </Card>
+    </Stack>
+  )
+}
+
+function TotalBlock({ label, value, strong, loading }) {
+  const content = loading
+    ? <SkeletonLine width={80} />
+    : (Number(value).toLocaleString(undefined, { minimumFractionDigits: 2 }))
+  return (
+    <Stack alignItems="flex-end">
+      <Typography variant="body2" color="text.secondary">{label}</Typography>
+      <Typography variant={strong ? 'h6' : 'body1'} fontWeight={strong ? 700 : 600}>
+        {content}
+      </Typography>
+    </Stack>
+  )
+}
+
+function SkeletonLine({ width = '60%' }) {
+  return (
+    <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mt: 0.5 }}>
+      <Box sx={{ width, height: 10, bgcolor: 'action.hover', borderRadius: 1 }} />
+    </Box>
   )
 }
