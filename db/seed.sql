@@ -7,9 +7,9 @@ INSERT INTO customers(id,name,phone,email) VALUES
   ('c2','Suda Dee','0800000002','suda@example.com');
 
 -- vehicles
-INSERT INTO vehicles(id,customer_id,brand,model,license_plate,odometer) VALUES
-  ('v1','c1','Toyota','Vios 1.5','กข-1234',102345),
-  ('v2','c2','Honda','City 1.5','ขค-5678',50321);
+INSERT INTO vehicles(id,customer_id,brand,model,license_plate) VALUES
+  ('v1','c1','Toyota','Vios 1.5','กข-1234'),
+  ('v2','c2','Honda','City 1.5','ขค-5678');
 
 -- goods
 INSERT INTO goods(id,sku,name,type,default_price,taxable,active) VALUES
@@ -25,8 +25,8 @@ INSERT INTO services(id,code,name,category,default_price,taxable,duration_minute
   ('s_srv_2','SRV-TIRE-ROT','Tire Rotation','tire',400,1,25,1);
 
 -- orders
-INSERT INTO orders(id,order_no,date,customer_id,vehicle_id,status,vat_rate,subtotal,vat,total,notes,tech_note) VALUES
-  ('o1','SO-202511-0001','2025-11-06','c1','v1','open',0.07,1750,122.5,1872.5,'น้ำมันเครื่อง+ไส้กรอง+บริการ','ตรวจรอยรั่ว');
+INSERT INTO orders(id,order_no,date,customer_id,vehicle_id,odometer,status,vat_rate,subtotal,vat,total,notes,tech_note) VALUES
+  ('o1','SO-202511-0001','2025-11-06','c1','v1',102345,'open',0.07,1750,122.5,1872.5,'น้ำมันเครื่อง+ไส้กรอง+บริการ','ตรวจรอยรั่ว');
 
 -- order_items (mix goods + services)
 INSERT INTO order_items(id,order_id,no,goods_id,service_id,type,name_snapshot,unit_price,qty,line_total) VALUES
