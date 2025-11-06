@@ -29,6 +29,11 @@ export default function CustomerDetail() {
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+  const [isEditing, setIsEditing] = useState(isNew)
+
+  useEffect(() => {
+    setIsEditing(isNew)
+  }, [isNew])
 
   useEffect(() => {
     let active = true
@@ -47,6 +52,7 @@ export default function CustomerDetail() {
             phone: c.phone ?? '',
             email: c.email ?? '',
           })
+          setIsEditing(false)
         }
       } catch (err) {
         if (active) {
@@ -115,12 +121,33 @@ export default function CustomerDetail() {
             email: updated.email ?? '',
           })
         }
+        setIsEditing(false)
       }
     } catch (err) {
       setError(err.message || 'Failed to save customer')
     } finally {
       setSaving(false)
     }
+  }
+
+  const handleEdit = () => {
+    setIsEditing(true)
+    setMessage('')
+  }
+
+  const handleCancel = () => {
+    if (!isNew && customer) {
+      setForm({
+        name: customer.name ?? '',
+        phone: customer.phone ?? '',
+        email: customer.email ?? '',
+      })
+    } else {
+      setForm(emptyForm)
+    }
+    setIsEditing(isNew)
+    setMessage('')
+    setError('')
   }
 
   const handleDelete = async () => {
@@ -165,6 +192,7 @@ export default function CustomerDetail() {
               onChange={handleChange('name')}
               required
               InputLabelProps={{ shrink: true }}
+              disabled={!isEditing}
             />
             <TextField
               label="Phone"
@@ -172,12 +200,14 @@ export default function CustomerDetail() {
               onChange={handleChange('phone')}
               required
               InputLabelProps={{ shrink: true }}
+              disabled={!isEditing}
             />
             <TextField
               label="Email"
               value={form.email}
               onChange={handleChange('email')}
               InputLabelProps={{ shrink: true }}
+              disabled={!isEditing}
             />
 
             {!isNew && customer?.created_at ? (
@@ -187,13 +217,28 @@ export default function CustomerDetail() {
             ) : null}
 
             <Stack direction="row" spacing={2}>
-              <Button
-                variant="contained"
-                onClick={handleSave}
-                disabled={saving}
-              >
-                {saving ? 'Saving…' : 'Save'}
-              </Button>
+              {isEditing ? (
+                <>
+                  <Button
+                    variant="contained"
+                    onClick={handleSave}
+                    disabled={saving}
+                  >
+                    {saving ? 'Saving…' : 'Save'}
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    onClick={handleCancel}
+                    disabled={saving}
+                  >
+                    Cancel
+                  </Button>
+                </>
+              ) : (
+                <Button variant="contained" onClick={handleEdit}>
+                  Edit
+                </Button>
+              )}
               {!isNew && (
                 <Button
                   variant="outlined"

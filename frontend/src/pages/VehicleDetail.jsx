@@ -32,6 +32,11 @@ export default function VehicleDetail() {
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+  const [isEditing, setIsEditing] = useState(isNew)
+
+  useEffect(() => {
+    setIsEditing(isNew)
+  }, [isNew])
 
   useEffect(() => {
     let active = true
@@ -51,6 +56,7 @@ export default function VehicleDetail() {
             model: v.model ?? '',
             licensePlate: v.license_plate ?? '',
           })
+          setIsEditing(false)
         }
       } catch (err) {
         if (active) {
@@ -121,12 +127,34 @@ export default function VehicleDetail() {
             licensePlate: updated.license_plate ?? '',
           })
         }
+        setIsEditing(false)
       }
     } catch (err) {
       setError(err.message || 'Failed to save vehicle')
     } finally {
       setSaving(false)
     }
+  }
+
+  const handleEdit = () => {
+    setIsEditing(true)
+    setMessage('')
+  }
+
+  const handleCancel = () => {
+    if (!isNew && vehicle) {
+      setForm({
+        customerId: vehicle.customer_id ?? '',
+        brand: vehicle.brand ?? '',
+        model: vehicle.model ?? '',
+        licensePlate: vehicle.license_plate ?? '',
+      })
+    } else {
+      setForm(emptyForm)
+    }
+    setIsEditing(isNew)
+    setMessage('')
+    setError('')
   }
 
   const handleDelete = async () => {
@@ -171,18 +199,21 @@ export default function VehicleDetail() {
               onChange={handleChange('customerId')}
               required
               InputLabelProps={{ shrink: true }}
+              disabled={!isEditing}
             />
             <TextField
               label="Brand"
               value={form.brand}
               onChange={handleChange('brand')}
               InputLabelProps={{ shrink: true }}
+              disabled={!isEditing}
             />
             <TextField
               label="Model"
               value={form.model}
               onChange={handleChange('model')}
               InputLabelProps={{ shrink: true }}
+              disabled={!isEditing}
             />
             <TextField
               label="License Plate"
@@ -190,6 +221,7 @@ export default function VehicleDetail() {
               onChange={handleChange('licensePlate')}
               required
               InputLabelProps={{ shrink: true }}
+              disabled={!isEditing}
             />
 
             {!isNew && vehicle?.created_at ? (
@@ -199,13 +231,28 @@ export default function VehicleDetail() {
             ) : null}
 
             <Stack direction="row" spacing={2}>
-              <Button
-                variant="contained"
-                onClick={handleSave}
-                disabled={saving}
-              >
-                {saving ? 'Saving…' : 'Save'}
-              </Button>
+              {isEditing ? (
+                <>
+                  <Button
+                    variant="contained"
+                    onClick={handleSave}
+                    disabled={saving}
+                  >
+                    {saving ? 'Saving…' : 'Save'}
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    onClick={handleCancel}
+                    disabled={saving}
+                  >
+                    Cancel
+                  </Button>
+                </>
+              ) : (
+                <Button variant="contained" onClick={handleEdit}>
+                  Edit
+                </Button>
+              )}
               {!isNew && (
                 <Button
                   variant="outlined"
