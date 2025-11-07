@@ -10,8 +10,7 @@ const ensurePartsTable = async (db) => {
 
 const fetchPartById = async (db, id) => {
   const sql = `
-    SELECT p.id, p.sku, p.name, p.type, p.default_price, p.description, p.brand, p.taxable, p.active, p.manufacturer,
-           p.part_number, p.compatible_models, p.spec, p.created_at
+    SELECT p.id, p.sku, p.name, p.type, p.default_price, p.description, p.brand, p.model, p.taxable, p.active, p.created_at
     FROM parts p
     WHERE p.id = ?
   `
@@ -66,30 +65,18 @@ export const createPartRoutes = () => {
         'p.sku LIKE ?',
         'p.name LIKE ?',
         'p.type LIKE ?',
-        'p.manufacturer LIKE ?',
-        'p.part_number LIKE ?',
-        'p.compatible_models LIKE ?',
         'p.brand LIKE ?',
-        'p.description LIKE ?',
+        'p.model LIKE ?',
+        'p.description LIKE ?'
       ]
       where.push(`(${searchClauses.join(' OR ')})`)
-      params.push(
-        `%${q}%`,
-        `%${q}%`,
-        `%${q}%`,
-        `%${q}%`,
-        `%${q}%`,
-        `%${q}%`,
-        `%${q}%`,
-        `%${q}%`
-      )
+      params.push(`%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`)
     }
 
     const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : ''
 
     const sql = `
-      SELECT p.id, p.sku, p.name, p.type, p.default_price, p.description, p.brand, p.taxable, p.active, p.manufacturer,
-             p.part_number, p.compatible_models, p.spec, p.created_at
+      SELECT p.id, p.sku, p.name, p.type, p.default_price, p.description, p.brand, p.model, p.taxable, p.active, p.created_at
       FROM parts p
       ${whereSql}
       ORDER BY p.created_at DESC, p.name ASC
@@ -126,16 +113,13 @@ export const createPartRoutes = () => {
       defaultPrice,
       description,
       brand,
+      model,
       taxable = true,
       active = true,
-      manufacturer,
-      partNumber,
-      compatibleModels,
-      spec,
     } = payload || {}
 
-    if (!name || defaultPrice === undefined) {
-      return c.json({ message: 'name and defaultPrice are required' }, 400)
+    if (!name || !type || defaultPrice === undefined) {
+      return c.json({ message: 'name, type, and defaultPrice are required' }, 400)
     }
 
     const numericPrice = Number(defaultPrice)
@@ -155,14 +139,11 @@ export const createPartRoutes = () => {
           default_price,
           description,
           brand,
+          model,
           taxable,
-          active,
-          manufacturer,
-          part_number,
-          compatible_models,
-          spec
+          active
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `
       await c.env.auto_service_db
         .prepare(stmt)
@@ -174,12 +155,9 @@ export const createPartRoutes = () => {
           numericPrice,
           description ?? null,
           brand ?? null,
+          model ?? null,
           toBooleanInt(taxable, 1),
-          toBooleanInt(active, 1),
-          manufacturer ?? null,
-          partNumber ?? null,
-          compatibleModels ?? null,
-          spec ?? null
+          toBooleanInt(active, 1)
         )
         .run()
     } catch (error) {
@@ -215,12 +193,9 @@ export const createPartRoutes = () => {
       default_price: payload?.defaultPrice !== undefined ? Number(payload.defaultPrice) : undefined,
       description: payload?.description,
       brand: payload?.brand,
+      model: payload?.model,
       taxable: payload?.taxable !== undefined ? toBooleanInt(payload.taxable) : undefined,
       active: payload?.active !== undefined ? toBooleanInt(payload.active) : undefined,
-      manufacturer: payload?.manufacturer,
-      part_number: payload?.partNumber,
-      compatible_models: payload?.compatibleModels,
-      spec: payload?.spec,
     }
 
     const setClauses = []

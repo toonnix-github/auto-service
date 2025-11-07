@@ -233,14 +233,14 @@ VALUES
     102345,
     'open',
     0.07,
-    1750,
-    122.5,
-    1872.5,
-    'น้ำมันเครื่อง+ไส้กรอง+บริการ',
+    1710,
+    119.7,
+    1829.7,
+    'น้ำมันเครื่อง+อะไหล่+บริการ',
     'ตรวจรอยรั่ว'
   );
 
--- order_items (mix goods + services)
+-- order_items (mix goods + services + parts)
 INSERT INTO
   order_items (
     id,
@@ -248,34 +248,38 @@ INSERT INTO
     no,
     goods_id,
     service_id,
+    part_id,
     type,
-    name_snapshot,
-    unit_price,
-    qty,
-    line_total
+    qty
   )
 VALUES
   (
     'i1',
     'o1',
     1,
-    'g_oil_1',
+    'g0000001',
+    NULL,
     NULL,
     'goods',
-    'Engine Oil 5W-30',
-    800,
-    1,
-    800
+    1
   ),
   (
     'i2',
     'o1',
     2,
     NULL,
-    's_srv_1',
+    's0000001',
+    NULL,
     'service',
-    'Change Engine Oil',
-    500,
-    1,
-    500
+    1
+  ),
+  (
+    'i3',
+    'o1',
+    3,
+    NULL,
+    NULL,
+    'p0000001',
+    'part',
+    2
   );
