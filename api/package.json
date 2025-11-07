@@ -5,7 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "wrangler dev",
-    "deploy": "wrangler deploy"
+    "deploy": "wrangler deploy",
+    "test": "npm run test:happy",
+    "test:happy": "node --test",
+    "test:full": "NODE_V8_COVERAGE=coverage node --test",
+    "test:watch": "node --watch --test"
   },
   "dependencies": {
     "hono": "^4.6.5"
