@@ -173,37 +173,79 @@ app.post('/api/orders', async (c) => {
   const paymentMethod = orderInput.paymentMethod ? String(orderInput.paymentMethod) : null
   const isCredit = orderInput.credit ? 1 : 0
 
-  const insertOrder = async () => {
-    const stmt = `
-      INSERT INTO orders (
-        id, order_no, date, customer_id, vehicle_id, odometer, status, vat_rate,
-        subtotal, vat, total, payment_method, is_credit, notes, tech_note, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-    `
+  const db = c.env.auto_service_db
 
-    await c.env.auto_service_db.prepare(stmt).bind(
-      orderId,
-      orderNo,
-      date,
-      orderInput.customerId,
-      orderInput.vehicleId,
-      odometer,
-      orderInput.status || 'open',
-      vatRateRaw,
-      subtotal,
-      vat,
-      total,
-      paymentMethod,
-      isCredit,
-      notes,
-      techNote,
-    ).run()
+  const insertOrderWithItems = async () => {
+    const begin = db.prepare('BEGIN TRANSACTION')
+    const commit = db.prepare('COMMIT')
+    const rollback = db.prepare('ROLLBACK')
+
+    await begin.run()
+
+    try {
+      const orderStmt = `
+        INSERT INTO orders (
+          id, order_no, date, customer_id, vehicle_id, odometer, status, vat_rate,
+          subtotal, vat, total, payment_method, is_credit, notes, tech_note, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      `
+
+      await db.prepare(orderStmt).bind(
+        orderId,
+        orderNo,
+        date,
+        orderInput.customerId,
+        orderInput.vehicleId,
+        odometer,
+        orderInput.status || 'open',
+        vatRateRaw,
+        subtotal,
+        vat,
+        total,
+        paymentMethod,
+        isCredit,
+        notes,
+        techNote,
+      ).run()
+
+      for (const [index, item] of cleanedItems.entries()) {
+        const itemId = crypto.randomUUID()
+        const goodsId = item.type === 'goods' ? item.sourceId : null
+        const serviceId = item.type === 'service' ? item.sourceId : null
+        const partId = item.type === 'part' ? item.sourceId : null
+
+        const itemStmt = `
+          INSERT INTO order_items (
+            id, order_id, no, goods_id, service_id, part_id, type, name_snapshot, unit_price, qty, line_total
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `
+
+        await db.prepare(itemStmt).bind(
+          itemId,
+          orderId,
+          index + 1,
+          goodsId,
+          serviceId,
+          partId,
+          item.type,
+          item.nameSnapshot || '',
+          item.unitPrice,
+          item.qty,
+          item.lineTotal,
+        ).run()
+      }
+
+      await commit.run()
+    } catch (error) {
+      await rollback.run()
+      throw error
+    }
   }
 
   let attempts = 0
   while (true) {
     try {
-      await insertOrder()
+      await insertOrderWithItems()
       break
     } catch (error) {
       const message = error?.message || ''
@@ -215,33 +257,6 @@ app.post('/api/orders', async (c) => {
       }
       return c.json({ message: 'Failed to create order', details: message }, 400)
     }
-  }
-
-  for (const [index, item] of cleanedItems.entries()) {
-    const itemId = crypto.randomUUID()
-    const goodsId = item.type === 'goods' ? item.sourceId : null
-    const serviceId = item.type === 'service' ? item.sourceId : null
-    const partId = item.type === 'part' ? item.sourceId : null
-
-    const stmt = `
-      INSERT INTO order_items (
-        id, order_id, no, goods_id, service_id, part_id, type, name_snapshot, unit_price, qty, line_total
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `
-
-    await c.env.auto_service_db.prepare(stmt).bind(
-      itemId,
-      orderId,
-      index + 1,
-      goodsId,
-      serviceId,
-      partId,
-      item.type,
-      item.nameSnapshot || '',
-      item.unitPrice,
-      item.qty,
-      item.lineTotal,
-    ).run()
   }
 
   const data = await fetchOrderDetail(c.env.auto_service_db, orderId)
