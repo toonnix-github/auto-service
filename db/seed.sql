@@ -1,5 +1,7 @@
 DELETE FROM order_items;
 
+DELETE FROM order_mechanics;
+
 DELETE FROM payments;
 
 DELETE FROM orders;
@@ -7,6 +9,8 @@ DELETE FROM orders;
 DELETE FROM vehicles;
 
 DELETE FROM customers;
+
+DELETE FROM mechanics;
 
 DELETE FROM parts;
 
@@ -206,6 +210,14 @@ VALUES
     1
   );
 
+-- mechanics
+INSERT INTO
+  mechanics (id, name)
+VALUES
+  ('m1', 'Anan Srithong'),
+  ('m2', 'Krit Nopparat'),
+  ('m3', 'Somporn Dee');
+
 -- orders
 INSERT INTO
   orders (
@@ -283,3 +295,10 @@ VALUES
     'part',
     2
   );
+
+-- order_mechanics
+INSERT INTO
+  order_mechanics (order_id, mechanic_id, position)
+VALUES
+  ('o1', 'm1', 1),
+  ('o1', 'm2', 2);

@@ -26,7 +26,7 @@ import {
 } from '@mui/material'
 import Autocomplete from '@mui/material/Autocomplete'
 import CircularProgress from '@mui/material/CircularProgress'
-import { Orders, Customers, Vehicles, Catalog } from '../lib/api'
+import { Orders, Customers, Vehicles, Catalog, Mechanics } from '../lib/api'
 
 const steps = ['Customer', 'Vehicle', 'Items', 'Review']
 const ORDER_STATUSES = [
@@ -101,6 +101,12 @@ export default function OrderCreate() {
   const [itemSearch, setItemSearch] = useState('')
   const [selectedCatalogItem, setSelectedCatalogItem] = useState(null)
   const [itemQty, setItemQty] = useState('1')
+
+  const [mechanicOptions, setMechanicOptions] = useState([])
+  const [mechanicLoading, setMechanicLoading] = useState(false)
+  const [mechanicError, setMechanicError] = useState('')
+  const [selectedMechanics, setSelectedMechanics] = useState([])
+  const [mechanicLimitError, setMechanicLimitError] = useState('')
 
   const [orderDate, setOrderDate] = useState(() => new Date().toISOString().slice(0, 10))
   const [odometer, setOdometer] = useState('')
@@ -189,6 +195,44 @@ export default function OrderCreate() {
 
     return () => { active = false }
   }, [])
+
+  useEffect(() => {
+    let active = true
+    setMechanicLoading(true)
+    Mechanics.list()
+      .then((data) => {
+        if (!active) return
+        setMechanicOptions(data?.rows ?? [])
+        setMechanicError('')
+      })
+      .catch((error) => {
+        if (!active) return
+        setMechanicError(error.message || 'Failed to load mechanics')
+      })
+      .finally(() => {
+        if (active) setMechanicLoading(false)
+      })
+
+    return () => { active = false }
+  }, [])
+
+  useEffect(() => {
+    setSelectedMechanics((prev) => {
+      if (!prev.length) return prev
+      if (!mechanicOptions.length) return []
+      const optionMap = new Map(mechanicOptions.map((option) => [option.id, option]))
+      const next = prev
+        .map((item) => optionMap.get(item.id))
+        .filter(Boolean)
+      if (next.length !== prev.length) return next
+      for (let index = 0; index < next.length; index += 1) {
+        if (next[index].id !== prev[index].id) {
+          return next
+        }
+      }
+      return prev
+    })
+  }, [mechanicOptions])
 
   const filteredCatalog = useMemo(() => {
     const query = itemSearch.trim().toLowerCase()
@@ -346,6 +390,15 @@ export default function OrderCreate() {
     setItems((prev) => prev.filter((item) => item.key !== key))
   }
 
+  const handleMechanicChange = useCallback((_, value) => {
+    if (value.length > 5) {
+      setMechanicLimitError('You can assign up to 5 mechanics')
+      return
+    }
+    setMechanicLimitError('')
+    setSelectedMechanics(value)
+  }, [])
+
   const handleSubmit = async () => {
     setGlobalError('')
     if (!customer || !vehicle || !items.length) {
@@ -380,6 +433,9 @@ export default function OrderCreate() {
       if (parsedOdometer !== null) payload.odometer = parsedOdometer
       if (notes.trim()) payload.notes = notes.trim()
       if (techNote.trim()) payload.techNote = techNote.trim()
+      if (selectedMechanics.length) {
+        payload.mechanics = selectedMechanics.map((mechanic) => mechanic.id)
+      }
 
       const result = await Orders.create(payload)
       const created = result?.order
@@ -617,6 +673,51 @@ export default function OrderCreate() {
               <Typography variant="body2">
                 {[vehicle?.brand, vehicle?.model].filter(Boolean).join(' ')}
               </Typography>
+            </Card>
+            <Card variant="outlined" sx={{ p: 2 }}>
+              <Stack spacing={2}>
+                <Typography variant="subtitle2" color="text.secondary">Mechanics</Typography>
+                {mechanicError ? <Alert severity="error">{mechanicError}</Alert> : null}
+                <Autocomplete
+                  multiple
+                  options={mechanicOptions}
+                  value={selectedMechanics}
+                  onChange={handleMechanicChange}
+                  getOptionLabel={(option) => option?.name || ''}
+                  isOptionEqualToValue={(option, value) => option.id === value.id}
+                  loading={mechanicLoading}
+                  filterSelectedOptions
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Assign mechanics"
+                      placeholder="Select up to 5 mechanics"
+                      error={Boolean(mechanicLimitError)}
+                      helperText={mechanicLimitError || ''}
+                      InputProps={{
+                        ...params.InputProps,
+                        endAdornment: (
+                          <>
+                            {mechanicLoading ? <CircularProgress color="inherit" size={18} /> : null}
+                            {params.InputProps.endAdornment}
+                          </>
+                        ),
+                      }}
+                    />
+                  )}
+                />
+                {selectedMechanics.length ? (
+                  <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                    {selectedMechanics.map((mechanic) => (
+                      <Chip key={mechanic.id} label={mechanic.name} />
+                    ))}
+                  </Stack>
+                ) : (
+                  <Typography variant="body2" color="text.secondary">
+                    No mechanics assigned.
+                  </Typography>
+                )}
+              </Stack>
             </Card>
             {renderItemsTable(false)}
             <Stack direction="row" spacing={4} justifyContent="flex-end">

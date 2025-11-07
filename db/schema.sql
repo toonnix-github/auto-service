@@ -71,6 +71,14 @@ CREATE TABLE
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
   );
 
+-- mechanics (service technicians)
+CREATE TABLE
+  IF NOT EXISTS mechanics (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+  );
+
 -- orders
 CREATE TABLE
   IF NOT EXISTS orders (
@@ -94,6 +102,16 @@ CREATE TABLE
 CREATE INDEX IF NOT EXISTS idx_orders_status ON orders (status);
 
 CREATE INDEX IF NOT EXISTS idx_orders_date ON orders (date);
+
+-- order mechanics assignments (link orders to up to 5 mechanics)
+CREATE TABLE
+  IF NOT EXISTS order_mechanics (
+    order_id TEXT NOT NULL REFERENCES orders (id),
+    mechanic_id TEXT NOT NULL REFERENCES mechanics (id),
+    position INTEGER NOT NULL,
+    PRIMARY KEY (order_id, mechanic_id),
+    UNIQUE (order_id, position)
+  );
 
 -- order_items (line items) — link to EITHER goods OR services
 CREATE TABLE

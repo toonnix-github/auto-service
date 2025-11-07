@@ -78,3 +78,11 @@ export const Catalog = {
   },
   get: (id) => api(`/catalog/items/${id}`),
 }
+
+export const Mechanics = {
+  list: (params = {}) => {
+    const qs = new URLSearchParams(params).toString()
+    return api(`/mechanics${qs ? `?${qs}` : ''}`)
+  },
+  get: (id) => api(`/mechanics/${id}`),
+}
