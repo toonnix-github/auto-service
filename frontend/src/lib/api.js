@@ -11,8 +11,31 @@ export async function api(path, opts = {}) {
 
   const text = await res.text()
 
+  if (res.status === 404 && !text) {
+    return null
+  }
+
   if (!res.ok) {
-    throw new Error(text || res.statusText)
+    let message = ''
+
+    if (text) {
+      try {
+        const parsed = JSON.parse(text)
+        if (parsed && typeof parsed.message === 'string' && parsed.message.trim()) {
+          message = parsed.message.trim()
+        } else {
+          message = text
+        }
+      } catch (error) {
+        message = text
+      }
+    }
+
+    if (!message) {
+      message = res.statusText || `Request failed with status ${res.status}`
+    }
+
+    throw new Error(message)
   }
 
   if (!text) return null
@@ -85,4 +108,15 @@ export const Mechanics = {
     return api(`/mechanics${qs ? `?${qs}` : ''}`)
   },
   get: (id) => api(`/mechanics/${id}`),
+  create: (payload) =>
+    api('/mechanics', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+  update: (id, payload) =>
+    api(`/mechanics/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    }),
+  remove: (id) => api(`/mechanics/${id}`, { method: 'DELETE' }),
 }

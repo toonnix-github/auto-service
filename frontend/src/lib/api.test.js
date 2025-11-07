@@ -39,6 +39,20 @@ describe('api helper', () => {
     assert.equal(data, null)
   })
 
+  it('returns null when a 404 responds with no body', async () => {
+    globalThis.fetch = async () => ({
+      ok: false,
+      status: 404,
+      statusText: 'Not Found',
+      async text() {
+        return ''
+      },
+    })
+
+    const data = await api('/missing')
+    assert.equal(data, null)
+  })
+
   it('throws when response is not ok', async () => {
     globalThis.fetch = async () => ({
       ok: false,
@@ -120,5 +134,23 @@ describe('resource helpers build urls correctly', () => {
   it('mechanics list builds the correct url', async () => {
     await Mechanics.list({ q: 'krit' })
     assert.ok(calls[0].url.endsWith('/mechanics?q=krit'))
+  })
+
+  it('mechanics create posts payload', async () => {
+    await Mechanics.create({ name: 'Jane' })
+    assert.ok(calls[0].url.endsWith('/mechanics'))
+    assert.equal(calls[0].options.method, 'POST')
+  })
+
+  it('mechanics update targets id endpoint', async () => {
+    await Mechanics.update('m-1', { name: 'Updated' })
+    assert.ok(calls[0].url.endsWith('/mechanics/m-1'))
+    assert.equal(calls[0].options.method, 'PUT')
+  })
+
+  it('mechanics remove issues DELETE request', async () => {
+    await Mechanics.remove('m-1')
+    assert.ok(calls[0].url.endsWith('/mechanics/m-1'))
+    assert.equal(calls[0].options.method, 'DELETE')
   })
 })
