@@ -53,14 +53,8 @@ const ensureOrderSchema = async (db) => {
   }
 
   if (!(await hasColumn(db, 'order_items', 'part_id'))) {
-    const begin = db.prepare('BEGIN TRANSACTION')
-    const commit = db.prepare('COMMIT')
-    const rollback = db.prepare('ROLLBACK')
-
-    await begin.run()
-
-    try {
-      await db.prepare(`
+    await db.transaction(async (tx) => {
+      await tx.prepare(`
         CREATE TABLE order_items_new (
           id TEXT PRIMARY KEY,
           order_id TEXT NOT NULL REFERENCES orders(id),
@@ -83,7 +77,7 @@ const ensureOrderSchema = async (db) => {
         )
       `).run()
 
-      await db.prepare(`
+      await tx.prepare(`
         INSERT INTO order_items_new (
           id, order_id, no, goods_id, service_id, part_id, type,
           name_snapshot, unit_price, qty, line_total
@@ -94,14 +88,9 @@ const ensureOrderSchema = async (db) => {
         FROM order_items
       `).run()
 
-      await db.prepare('DROP TABLE order_items').run()
-      await db.prepare('ALTER TABLE order_items_new RENAME TO order_items').run()
-
-      await commit.run()
-    } catch (error) {
-      await rollback.run()
-      throw error
-    }
+      await tx.prepare('DROP TABLE order_items').run()
+      await tx.prepare('ALTER TABLE order_items_new RENAME TO order_items').run()
+    })
   }
 }
 
@@ -260,13 +249,7 @@ app.post('/api/orders', async (c) => {
   const db = c.env.auto_service_db
 
   const insertOrderWithItems = async () => {
-    const begin = db.prepare('BEGIN TRANSACTION')
-    const commit = db.prepare('COMMIT')
-    const rollback = db.prepare('ROLLBACK')
-
-    await begin.run()
-
-    try {
+    await db.transaction(async (tx) => {
       const orderStmt = `
         INSERT INTO orders (
           id, order_no, date, customer_id, vehicle_id, odometer, status, vat_rate,
@@ -274,7 +257,7 @@ app.post('/api/orders', async (c) => {
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
       `
 
-      await db.prepare(orderStmt).bind(
+      await tx.prepare(orderStmt).bind(
         orderId,
         orderNo,
         date,
@@ -304,7 +287,7 @@ app.post('/api/orders', async (c) => {
           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `
 
-        await db.prepare(itemStmt).bind(
+        await tx.prepare(itemStmt).bind(
           itemId,
           orderId,
           index + 1,
@@ -318,12 +301,7 @@ app.post('/api/orders', async (c) => {
           item.lineTotal,
         ).run()
       }
-
-      await commit.run()
-    } catch (error) {
-      await rollback.run()
-      throw error
-    }
+    })
   }
 
   let attempts = 0
