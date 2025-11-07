@@ -65,3 +65,11 @@ export const Customers = {
   }),
   remove: (id) => api(`/customers/${id}`, { method: 'DELETE' }),
 }
+
+export const Catalog = {
+  list: (params = {}) => {
+    const qs = new URLSearchParams(params).toString()
+    return api(`/catalog/items${qs ? `?${qs}` : ''}`)
+  },
+  get: (id) => api(`/catalog/items/${id}`),
+}

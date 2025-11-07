@@ -5,6 +5,7 @@ import { createVehicleRoutes } from './routes/vehicles'
 import { createGoodsRoutes } from './routes/goods'
 import { createPartRoutes } from './routes/parts'
 import { createServiceRoutes } from './routes/services'
+import { createCatalogRoutes } from './routes/catalog'
 
 const app = new Hono()
 
@@ -64,7 +65,22 @@ app.get('/api/orders/:id', async (c) => {
   const order = await c.env.auto_service_db.prepare(orderSql).bind(id).first()
   if (!order) return c.notFound()
 
-  const itemsSql = `SELECT id, no, type, name_snapshot, unit_price, qty, line_total FROM order_items WHERE order_id = ? ORDER BY no ASC`
+  const itemsSql = `
+    SELECT
+      oi.id,
+      oi.no,
+      oi.type,
+      COALESCE(g.name, s.name, p.name) AS name_snapshot,
+      COALESCE(g.default_price, s.default_price, p.default_price) AS unit_price,
+      oi.qty,
+      ROUND(oi.qty * COALESCE(g.default_price, s.default_price, p.default_price), 2) AS line_total
+    FROM order_items oi
+    LEFT JOIN goods g ON g.id = oi.goods_id
+    LEFT JOIN services s ON s.id = oi.service_id
+    LEFT JOIN parts p ON p.id = oi.part_id
+    WHERE oi.order_id = ?
+    ORDER BY oi.no ASC
+  `
   const items = (await c.env.auto_service_db.prepare(itemsSql).bind(id).all()).results
 
   return c.json({ order, items })
@@ -75,5 +91,6 @@ app.route('/api/vehicles', createVehicleRoutes())
 app.route('/api/goods', createGoodsRoutes())
 app.route('/api/parts', createPartRoutes())
 app.route('/api/services', createServiceRoutes())
+app.route('/api/catalog', createCatalogRoutes())
 
 export default app

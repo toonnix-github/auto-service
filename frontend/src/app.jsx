@@ -6,6 +6,7 @@ import VehicleList from './pages/VehicleList'
 import VehicleDetail from './pages/VehicleDetail'
 import CustomerList from './pages/CustomerList'
 import CustomerDetail from './pages/CustomerDetail'
+import CatalogPage from './pages/Catalog'
 
 export default function App() {
   return (
@@ -25,6 +26,9 @@ export default function App() {
             <Button color="inherit" component={Link} to="/customer">
               Customers
             </Button>
+            <Button color="inherit" component={Link} to="/catalog">
+              Catalog
+            </Button>
           </Stack>
         </Toolbar>
       </AppBar>
@@ -37,6 +41,7 @@ export default function App() {
           <Route path="/vehicle/:id" element={<VehicleDetail />} />
           <Route path="/customer" element={<CustomerList />} />
           <Route path="/customer/:id" element={<CustomerDetail />} />
+          <Route path="/catalog" element={<CatalogPage />} />
           <Route path="*" element={<OrdersList />} />
         </Routes>
       </Container>

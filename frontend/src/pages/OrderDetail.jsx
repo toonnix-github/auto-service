@@ -29,7 +29,9 @@ export default function OrderDetail() {
       align: 'right',
       headerAlign: 'right',
       renderCell: (p) => {
-        const v = Number(p.row.unit_price)
+        const value = p.row.unit_price
+        if (value === null || value === undefined) return '-'
+        const v = Number(value)
         return Number.isFinite(v)
           ? v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
           : '-'
@@ -44,7 +46,9 @@ export default function OrderDetail() {
       align: 'right',
       headerAlign: 'right',
       renderCell: (p) => {
-        const v = Number(p.row.unit_price)
+        const value = p.row.line_total
+        if (value === null || value === undefined) return '-'
+        const v = Number(value)
         return Number.isFinite(v)
           ? v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
           : '-'
