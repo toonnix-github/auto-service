@@ -238,9 +238,8 @@ app.post('/api/orders', async (c) => {
   const notes = typeof payload?.notes === 'string' ? payload.notes.trim() || null : null
   const techNote = typeof payload?.techNote === 'string' ? payload.techNote.trim() || null : null
 
-  await db.prepare('BEGIN').run()
-  try {
-    await db
+  const statements = [
+    db
       .prepare(`
         INSERT INTO orders (
           id, order_no, date, customer_id, vehicle_id, odometer, status, vat_rate,
@@ -263,12 +262,13 @@ app.post('/api/orders', async (c) => {
         techNote,
         nowIso,
         nowIso,
-      )
-      .run()
+      ),
+  ]
 
-    for (let index = 0; index < resolvedItems.length; index += 1) {
-      const item = resolvedItems[index]
-      await db
+  for (let index = 0; index < resolvedItems.length; index += 1) {
+    const item = resolvedItems[index]
+    statements.push(
+      db
         .prepare(`
           INSERT INTO order_items (id, order_id, no, goods_id, service_id, part_id, type, qty)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -282,13 +282,13 @@ app.post('/api/orders', async (c) => {
           item.type === 'part' ? item.sourceId : null,
           item.type,
           item.qty,
-        )
-        .run()
-    }
+        ),
+    )
+  }
 
-    await db.prepare('COMMIT').run()
+  try {
+    await db.batch(statements)
   } catch (error) {
-    await db.prepare('ROLLBACK').run().catch(() => {})
     return c.json({ message: 'Failed to create order', details: error.message }, 400)
   }
 
