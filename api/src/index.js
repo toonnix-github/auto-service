@@ -36,9 +36,93 @@ const generateOrderNo = (date) => {
   return `SO-${base}-${random}`
 }
 
+const hasColumn = async (db, table, column) => {
+  const sql = `SELECT 1 FROM pragma_table_info('${table}') WHERE name = ? LIMIT 1`
+  const row = await db.prepare(sql).bind(column).first()
+  return Boolean(row)
+}
+
+const ensureOrderSchema = async (db) => {
+  if (!(await hasColumn(db, 'orders', 'payment_method'))) {
+    await db.prepare('ALTER TABLE orders ADD COLUMN payment_method TEXT').run()
+  }
+  if (!(await hasColumn(db, 'orders', 'is_credit'))) {
+    await db
+      .prepare('ALTER TABLE orders ADD COLUMN is_credit INTEGER NOT NULL DEFAULT 0')
+      .run()
+  }
+
+  if (!(await hasColumn(db, 'order_items', 'part_id'))) {
+    const begin = db.prepare('BEGIN TRANSACTION')
+    const commit = db.prepare('COMMIT')
+    const rollback = db.prepare('ROLLBACK')
+
+    await begin.run()
+
+    try {
+      await db.prepare(`
+        CREATE TABLE order_items_new (
+          id TEXT PRIMARY KEY,
+          order_id TEXT NOT NULL REFERENCES orders(id),
+          no INTEGER NOT NULL,
+          goods_id TEXT REFERENCES goods(id),
+          service_id TEXT REFERENCES services(id),
+          part_id TEXT REFERENCES parts(id),
+          type TEXT NOT NULL,
+          name_snapshot TEXT NOT NULL,
+          unit_price REAL NOT NULL,
+          qty REAL NOT NULL,
+          line_total REAL NOT NULL,
+          CHECK (
+            (goods_id IS NOT NULL AND service_id IS NULL AND part_id IS NULL)
+            OR
+            (goods_id IS NULL AND service_id IS NOT NULL AND part_id IS NULL)
+            OR
+            (goods_id IS NULL AND service_id IS NULL AND part_id IS NOT NULL)
+          )
+        )
+      `).run()
+
+      await db.prepare(`
+        INSERT INTO order_items_new (
+          id, order_id, no, goods_id, service_id, part_id, type,
+          name_snapshot, unit_price, qty, line_total
+        )
+        SELECT
+          id, order_id, no, goods_id, service_id, NULL, type,
+          name_snapshot, unit_price, qty, line_total
+        FROM order_items
+      `).run()
+
+      await db.prepare('DROP TABLE order_items').run()
+      await db.prepare('ALTER TABLE order_items_new RENAME TO order_items').run()
+
+      await commit.run()
+    } catch (error) {
+      await rollback.run()
+      throw error
+    }
+  }
+}
+
+let schemaReady
+const ensureSchemaReady = async (db) => {
+  if (!schemaReady) {
+    schemaReady = ensureOrderSchema(db).catch((error) => {
+      schemaReady = undefined
+      throw error
+    })
+  }
+  return schemaReady
+}
+
 const app = new Hono()
 
 app.use('*', cors({ origin: '*', allowHeaders: ['Content-Type'] }))
+app.use('*', async (c, next) => {
+  await ensureSchemaReady(c.env.auto_service_db)
+  await next()
+})
 
 // Health
 app.get('/api/health', (c) => c.json({ ok: true }))
