@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
 
-const ensureCustomersTable = async (db) => {
+export const ensureCustomersTable = async (db) => {
   const sql = "SELECT name FROM sqlite_master WHERE type='table' AND name='customers'"
   const table = await db.prepare(sql).first()
   if (!table) {
@@ -8,7 +8,7 @@ const ensureCustomersTable = async (db) => {
   }
 }
 
-const fetchCustomerById = async (db, id) => {
+export const fetchCustomerById = async (db, id) => {
   const sql = `
     SELECT id, name, phone, email, created_at
     FROM customers

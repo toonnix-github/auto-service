@@ -1,11 +1,11 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
-import { createCustomerRoutes } from './routes/customers'
-import { createVehicleRoutes } from './routes/vehicles'
-import { createGoodsRoutes } from './routes/goods'
-import { createPartRoutes } from './routes/parts'
-import { createServiceRoutes } from './routes/services'
-import { createCatalogRoutes } from './routes/catalog'
+import { createCustomerRoutes } from './routes/customers.js'
+import { createVehicleRoutes } from './routes/vehicles.js'
+import { createGoodsRoutes } from './routes/goods.js'
+import { createPartRoutes } from './routes/parts.js'
+import { createServiceRoutes } from './routes/services.js'
+import { createCatalogRoutes } from './routes/catalog.js'
 
 const ORDER_STATUS_SET = new Set(['draft', 'open', 'in_progress', 'ready', 'closed', 'cancelled'])
 const ITEM_TYPES = new Set(['goods', 'service', 'part'])
@@ -304,3 +304,5 @@ app.route('/api/services', createServiceRoutes())
 app.route('/api/catalog', createCatalogRoutes())
 
 export default app
+
+export { ORDER_STATUS_SET, ITEM_TYPES, roundCurrency, generateOrderNumber, fetchOrderDetail }
