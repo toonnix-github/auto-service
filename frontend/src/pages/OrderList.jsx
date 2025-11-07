@@ -91,9 +91,14 @@ export default function OrdersList() {
     <Stack spacing={2}>
       <Stack direction="row" justifyContent="space-between" alignItems="center">
         <Typography variant="h5" fontWeight={600}>Orders</Typography>
-        <Button component={Link} to="/vehicle" variant="outlined">
-          View vehicles
-        </Button>
+        <Stack direction="row" spacing={1}>
+          <Button component={Link} to="/order/new" variant="contained">
+            + New order
+          </Button>
+          <Button component={Link} to="/vehicle" variant="outlined">
+            View vehicles
+          </Button>
+        </Stack>
       </Stack>
 
       <Stack direction="row" spacing={1}>

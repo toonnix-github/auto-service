@@ -2,6 +2,7 @@ import { Routes, Route, Link } from 'react-router-dom';
 import { AppBar, Toolbar, Typography, Container, Button, Stack } from '@mui/material';
 import OrdersList from './pages/OrderList'
 import OrderDetail from './pages/OrderDetail'
+import OrderCreate from './pages/OrderCreate'
 import VehicleList from './pages/VehicleList'
 import VehicleDetail from './pages/VehicleDetail'
 import CustomerList from './pages/CustomerList'
@@ -36,6 +37,7 @@ export default function App() {
       <Container sx={{ mt: 4, mb: 4 }}>
         <Routes>
           <Route path="/order" element={<OrdersList />} />
+          <Route path="/order/new" element={<OrderCreate />} />
           <Route path="/order/:id" element={<OrderDetail />} />
           <Route path="/vehicle" element={<VehicleList />} />
           <Route path="/vehicle/:id" element={<VehicleDetail />} />
