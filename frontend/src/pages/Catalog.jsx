@@ -61,7 +61,6 @@ export default function CatalogPage() {
       headerName: 'Name',
       flex: 1.4,
       minWidth: 220,
-      valueGetter: (params) => params.row.name,
     },
     {
       field: 'item_type',
@@ -82,35 +81,35 @@ export default function CatalogPage() {
       headerName: 'Brand',
       flex: 0.8,
       minWidth: 150,
-      valueGetter: (params) => params.row.brand || '—',
+      valueGetter: (params) => params || '—',
     },
     {
       field: 'source_code',
       headerName: 'Code / SKU',
       flex: 0.7,
       minWidth: 160,
-      valueGetter: (params) => params.row.source_code || '—',
+      valueGetter: (params) => params || '—',
     },
     {
       field: 'price',
       headerName: 'Price',
       flex: 0.6,
       minWidth: 140,
-      valueFormatter: (params) => formatCurrency(params.value),
+      valueFormatter: (params) => formatCurrency(params),
     },
     {
       field: 'category',
       headerName: 'Category',
       flex: 0.7,
       minWidth: 150,
-      valueGetter: (params) => params.row.category || '—',
+      valueGetter: (params) => params || '—',
     },
     {
       field: 'description',
       headerName: 'Description',
       flex: 1.5,
       minWidth: 260,
-      valueGetter: (params) => params.row.description || '—',
+      valueGetter: (params) => params || '—',
     },
   ]), [])
 
