@@ -104,7 +104,7 @@ CREATE TABLE
     goods_id TEXT REFERENCES goods (id),
     service_id TEXT REFERENCES services (id),
     part_id TEXT REFERENCES parts (id),
-    type TEXT NOT NULL, -- 'goods' or 'service'
+    type TEXT NOT NULL, -- 'goods', 'service', or 'part'
     qty REAL NOT NULL,
     CHECK (
       (
@@ -152,8 +152,8 @@ SELECT
   p.id AS source_id,
   p.sku AS source_code,
   p.name,
-  COALESCE(p.description, p.spec) AS description,
-  COALESCE(p.brand, p.manufacturer) AS brand,
+  p.description,
+  p.brand,
   p.type AS category,
   p.default_price AS price,
   p.taxable,
@@ -170,7 +170,7 @@ SELECT
   s.name,
   s.description,
   s.brand,
-  s.category AS category,
+  s.type AS category,
   s.default_price AS price,
   s.taxable,
   s.active,
