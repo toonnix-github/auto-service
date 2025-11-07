@@ -5,6 +5,7 @@ import { createVehicleRoutes } from './routes/vehicles'
 import { createGoodsRoutes } from './routes/goods'
 import { createPartRoutes } from './routes/parts'
 import { createServiceRoutes } from './routes/services'
+import { createCatalogRoutes } from './routes/catalog'
 
 const app = new Hono()
 
@@ -75,5 +76,6 @@ app.route('/api/vehicles', createVehicleRoutes())
 app.route('/api/goods', createGoodsRoutes())
 app.route('/api/parts', createPartRoutes())
 app.route('/api/services', createServiceRoutes())
+app.route('/api/catalog', createCatalogRoutes())
 
 export default app

@@ -24,6 +24,8 @@ CREATE TABLE IF NOT EXISTS goods (
   name TEXT NOT NULL,
   type TEXT NOT NULL,                -- oil|tire|part|other
   default_price REAL NOT NULL,
+  description TEXT,
+  brand TEXT,
   taxable INTEGER NOT NULL DEFAULT 1,
   active INTEGER NOT NULL DEFAULT 1,
   created_at TEXT DEFAULT CURRENT_TIMESTAMP
@@ -37,6 +39,8 @@ CREATE TABLE IF NOT EXISTS parts (
   name TEXT NOT NULL,
   type TEXT,                                -- e.g., engine, body, electrical
   default_price REAL NOT NULL,
+  description TEXT,
+  brand TEXT,
   taxable INTEGER NOT NULL DEFAULT 1,
   active INTEGER NOT NULL DEFAULT 1,
   manufacturer TEXT,
@@ -54,6 +58,8 @@ CREATE TABLE IF NOT EXISTS services (
   name TEXT NOT NULL,                       -- e.g., Change Engine Oil
   category TEXT,                            -- e.g., maintenance, tire, inspection
   default_price REAL NOT NULL,              -- labor price or package price
+  description TEXT,
+  brand TEXT,
   taxable INTEGER NOT NULL DEFAULT 1,
   duration_minutes INTEGER,                 -- optional: estimated duration
   active INTEGER NOT NULL DEFAULT 1,
@@ -113,4 +119,51 @@ CREATE TABLE IF NOT EXISTS payments (
   paid_at TEXT DEFAULT CURRENT_TIMESTAMP,
   cashier TEXT
 );
+
+-- catalog_items view provides unified access to goods, parts, and services
+CREATE VIEW IF NOT EXISTS catalog_items AS
+SELECT
+  g.id AS item_id,
+  'goods' AS item_type,
+  g.id AS source_id,
+  g.sku AS source_code,
+  g.name,
+  g.description,
+  g.brand,
+  g.type AS category,
+  g.default_price AS price,
+  g.taxable,
+  g.active,
+  g.created_at
+FROM goods g
+UNION ALL
+SELECT
+  p.id AS item_id,
+  'part' AS item_type,
+  p.id AS source_id,
+  p.sku AS source_code,
+  p.name,
+  COALESCE(p.description, p.spec) AS description,
+  COALESCE(p.brand, p.manufacturer) AS brand,
+  p.type AS category,
+  p.default_price AS price,
+  p.taxable,
+  p.active,
+  p.created_at
+FROM parts p
+UNION ALL
+SELECT
+  s.id AS item_id,
+  'service' AS item_type,
+  s.id AS source_id,
+  s.code AS source_code,
+  s.name,
+  s.description,
+  s.brand,
+  s.category AS category,
+  s.default_price AS price,
+  s.taxable,
+  s.active,
+  s.created_at
+FROM services s;
     

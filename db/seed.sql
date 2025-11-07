@@ -11,19 +11,114 @@ INSERT INTO vehicles(id,customer_id,brand,model,license_plate) VALUES
   ('v1','c1','Toyota','Vios 1.5','กข-1234'),
   ('v2','c2','Honda','City 1.5','ขค-5678');
 
-INSERT INTO goods(id,sku,name,type,default_price,taxable,active) VALUES
-  ('g_oil_1','OIL-5W30','Engine Oil 5W-30','oil',800,1,1),
-  ('g_clean_1','CLEAN-SHAMPOO','Car Shampoo','other',280,1,1);
+INSERT INTO goods(id,sku,name,type,default_price,description,brand,taxable,active) VALUES
+  (
+    'g_oil_1',
+    'OIL-5W30',
+    'Engine Oil 5W-30',
+    'oil',
+    800,
+    'Fully synthetic engine oil suitable for small sedans.',
+    'ACME Lube',
+    1,
+    1
+  ),
+  (
+    'g_clean_1',
+    'CLEAN-SHAMPOO',
+    'Car Shampoo',
+    'other',
+    280,
+    'Foaming shampoo for exterior detailing.',
+    'ShinePro',
+    1,
+    1
+  );
 
 -- parts
-INSERT INTO parts(id,sku,name,type,default_price,taxable,active,manufacturer,part_number,compatible_models,spec) VALUES
-  ('p_air_filter','PART-AIRFLT','Air Filter','engine',450,1,1,'Denso','AF-1234','Toyota Vios 2007-2013','Paper filter'),
-  ('p_side_mirror','PART-SDMIR','Side Mirror','body',1250,1,1,'Toyota','SDM-908','Toyota Vios 2012-2015','Right-hand side');
+INSERT INTO parts(
+  id,
+  sku,
+  name,
+  type,
+  default_price,
+  description,
+  brand,
+  taxable,
+  active,
+  manufacturer,
+  part_number,
+  compatible_models,
+  spec
+) VALUES
+  (
+    'p_air_filter',
+    'PART-AIRFLT',
+    'Air Filter',
+    'engine',
+    450,
+    'Replacement engine air filter with paper media.',
+    'Denso',
+    1,
+    1,
+    'Denso',
+    'AF-1234',
+    'Toyota Vios 2007-2013',
+    'Paper filter'
+  ),
+  (
+    'p_side_mirror',
+    'PART-SDMIR',
+    'Side Mirror',
+    'body',
+    1250,
+    'Right-hand replacement side mirror assembly.',
+    'Toyota Genuine',
+    1,
+    1,
+    'Toyota',
+    'SDM-908',
+    'Toyota Vios 2012-2015',
+    'Right-hand side'
+  );
 
 -- services
-INSERT INTO services(id,code,name,category,default_price,taxable,duration_minutes,active) VALUES
-  ('s_srv_1','SRV-CHANGE-OIL','Change Engine Oil','maintenance',500,1,30,1),
-  ('s_srv_2','SRV-TIRE-ROT','Tire Rotation','tire',400,1,25,1);
+INSERT INTO services(
+  id,
+  code,
+  name,
+  category,
+  default_price,
+  description,
+  brand,
+  taxable,
+  duration_minutes,
+  active
+) VALUES
+  (
+    's_srv_1',
+    'SRV-CHANGE-OIL',
+    'Change Engine Oil',
+    'maintenance',
+    500,
+    'Drain old oil, replace oil filter, and refill with premium oil.',
+    'AutoCare Workshop',
+    1,
+    30,
+    1
+  ),
+  (
+    's_srv_2',
+    'SRV-TIRE-ROT',
+    'Tire Rotation',
+    'tire',
+    400,
+    'Rotate tires and inspect tread wear and pressure.',
+    'AutoCare Workshop',
+    1,
+    25,
+    1
+  );
 
 -- orders
 INSERT INTO orders(id,order_no,date,customer_id,vehicle_id,odometer,status,vat_rate,subtotal,vat,total,notes,tech_note) VALUES

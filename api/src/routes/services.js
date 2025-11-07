@@ -10,7 +10,7 @@ const ensureServicesTable = async (db) => {
 
 const fetchServiceById = async (db, id) => {
   const sql = `
-    SELECT id, code, name, category, default_price, taxable, duration_minutes, active, created_at
+    SELECT id, code, name, category, default_price, description, brand, taxable, duration_minutes, active, created_at
     FROM services
     WHERE id = ?
   `
@@ -80,14 +80,14 @@ export const createServiceRoutes = () => {
     }
 
     if (q) {
-      where.push('(code LIKE ? OR name LIKE ? OR category LIKE ?)')
-      params.push(`%${q}%`, `%${q}%`, `%${q}%`)
+      where.push('(code LIKE ? OR name LIKE ? OR category LIKE ? OR brand LIKE ? OR description LIKE ?)')
+      params.push(`%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`)
     }
 
     const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : ''
 
     const sql = `
-      SELECT id, code, name, category, default_price, taxable, duration_minutes, active, created_at
+      SELECT id, code, name, category, default_price, description, brand, taxable, duration_minutes, active, created_at
       FROM services
       ${whereSql}
       ORDER BY created_at DESC, name ASC
@@ -124,6 +124,8 @@ export const createServiceRoutes = () => {
       name,
       category,
       defaultPrice,
+      description,
+      brand,
       taxable = 1,
       durationMinutes,
       active = 1,
@@ -157,8 +159,8 @@ export const createServiceRoutes = () => {
 
     try {
       const stmt = `
-        INSERT INTO services (id, code, name, category, default_price, taxable, duration_minutes, active)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO services (id, code, name, category, default_price, description, brand, taxable, duration_minutes, active)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `
       await c.env.auto_service_db
         .prepare(stmt)
@@ -168,6 +170,8 @@ export const createServiceRoutes = () => {
           name,
           category ?? null,
           defaultPriceParsed.value,
+          description ?? null,
+          brand ?? null,
           taxableParsed.value ? 1 : 0,
           durationParsed.provided ? durationParsed.value : null,
           activeParsed.value ? 1 : 0,
@@ -207,6 +211,14 @@ export const createServiceRoutes = () => {
         return c.json({ message: 'defaultPrice must be a number' }, 400)
       }
       fields.set('default_price', parsed.value)
+    }
+
+    if (payload?.description !== undefined) {
+      fields.set('description', payload.description ?? null)
+    }
+
+    if (payload?.brand !== undefined) {
+      fields.set('brand', payload.brand ?? null)
     }
 
     if (payload?.durationMinutes !== undefined) {

@@ -10,7 +10,7 @@ const ensurePartsTable = async (db) => {
 
 const fetchPartById = async (db, id) => {
   const sql = `
-    SELECT p.id, p.sku, p.name, p.type, p.default_price, p.taxable, p.active, p.manufacturer,
+    SELECT p.id, p.sku, p.name, p.type, p.default_price, p.description, p.brand, p.taxable, p.active, p.manufacturer,
            p.part_number, p.compatible_models, p.spec, p.created_at
     FROM parts p
     WHERE p.id = ?
@@ -62,16 +62,33 @@ export const createPartRoutes = () => {
     }
 
     if (q) {
-      where.push(
-        '(p.sku LIKE ? OR p.name LIKE ? OR p.type LIKE ? OR p.manufacturer LIKE ? OR p.part_number LIKE ? OR p.compatible_models LIKE ?)'
+      const searchClauses = [
+        'p.sku LIKE ?',
+        'p.name LIKE ?',
+        'p.type LIKE ?',
+        'p.manufacturer LIKE ?',
+        'p.part_number LIKE ?',
+        'p.compatible_models LIKE ?',
+        'p.brand LIKE ?',
+        'p.description LIKE ?',
+      ]
+      where.push(`(${searchClauses.join(' OR ')})`)
+      params.push(
+        `%${q}%`,
+        `%${q}%`,
+        `%${q}%`,
+        `%${q}%`,
+        `%${q}%`,
+        `%${q}%`,
+        `%${q}%`,
+        `%${q}%`
       )
-      params.push(`%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`)
     }
 
     const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : ''
 
     const sql = `
-      SELECT p.id, p.sku, p.name, p.type, p.default_price, p.taxable, p.active, p.manufacturer,
+      SELECT p.id, p.sku, p.name, p.type, p.default_price, p.description, p.brand, p.taxable, p.active, p.manufacturer,
              p.part_number, p.compatible_models, p.spec, p.created_at
       FROM parts p
       ${whereSql}
@@ -107,6 +124,8 @@ export const createPartRoutes = () => {
       name,
       type,
       defaultPrice,
+      description,
+      brand,
       taxable = true,
       active = true,
       manufacturer,
@@ -129,9 +148,21 @@ export const createPartRoutes = () => {
     try {
       const stmt = `
         INSERT INTO parts (
-          id, sku, name, type, default_price, taxable, active, manufacturer, part_number, compatible_models, spec
+          id,
+          sku,
+          name,
+          type,
+          default_price,
+          description,
+          brand,
+          taxable,
+          active,
+          manufacturer,
+          part_number,
+          compatible_models,
+          spec
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `
       await c.env.auto_service_db
         .prepare(stmt)
@@ -141,6 +172,8 @@ export const createPartRoutes = () => {
           name,
           type ?? null,
           numericPrice,
+          description ?? null,
+          brand ?? null,
           toBooleanInt(taxable, 1),
           toBooleanInt(active, 1),
           manufacturer ?? null,
@@ -180,6 +213,8 @@ export const createPartRoutes = () => {
       name: payload?.name,
       type: payload?.type,
       default_price: payload?.defaultPrice !== undefined ? Number(payload.defaultPrice) : undefined,
+      description: payload?.description,
+      brand: payload?.brand,
       taxable: payload?.taxable !== undefined ? toBooleanInt(payload.taxable) : undefined,
       active: payload?.active !== undefined ? toBooleanInt(payload.active) : undefined,
       manufacturer: payload?.manufacturer,

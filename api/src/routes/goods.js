@@ -10,7 +10,7 @@ const ensureGoodsTable = async (db) => {
 
 const fetchGoodsById = async (db, id) => {
   const sql = `
-    SELECT g.id, g.sku, g.name, g.type, g.default_price, g.taxable, g.active, g.created_at
+    SELECT g.id, g.sku, g.name, g.type, g.default_price, g.description, g.brand, g.taxable, g.active, g.created_at
     FROM goods g
     WHERE g.id = ?
   `
@@ -63,14 +63,14 @@ export const createGoodsRoutes = () => {
     }
 
     if (q) {
-      where.push('(g.sku LIKE ? OR g.name LIKE ? OR g.type LIKE ?)')
-      params.push(`%${q}%`, `%${q}%`, `%${q}%`)
+      where.push('(g.sku LIKE ? OR g.name LIKE ? OR g.type LIKE ? OR g.brand LIKE ? OR g.description LIKE ?)')
+      params.push(`%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`)
     }
 
     const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : ''
 
     const sql = `
-      SELECT g.id, g.sku, g.name, g.type, g.default_price, g.taxable, g.active, g.created_at
+      SELECT g.id, g.sku, g.name, g.type, g.default_price, g.description, g.brand, g.taxable, g.active, g.created_at
       FROM goods g
       ${whereSql}
       ORDER BY g.created_at DESC, g.name ASC
@@ -100,7 +100,7 @@ export const createGoodsRoutes = () => {
       return c.json({ message: 'Invalid JSON payload' }, 400)
     }
 
-    const { sku, name, type, defaultPrice, taxable = true, active = true } = payload || {}
+    const { sku, name, type, defaultPrice, description, brand, taxable = true, active = true } = payload || {}
 
     if (!name || !type || defaultPrice === undefined) {
       return c.json({ message: 'name, type, and defaultPrice are required' }, 400)
@@ -119,12 +119,22 @@ export const createGoodsRoutes = () => {
 
     try {
       const stmt = `
-        INSERT INTO goods (id, sku, name, type, default_price, taxable, active)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO goods (id, sku, name, type, default_price, description, brand, taxable, active)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       `
       await c.env.auto_service_db
         .prepare(stmt)
-        .bind(id, sku ?? null, name, type, numericPrice, toBooleanInt(taxable, 1), toBooleanInt(active, 1))
+        .bind(
+          id,
+          sku ?? null,
+          name,
+          type,
+          numericPrice,
+          description ?? null,
+          brand ?? null,
+          toBooleanInt(taxable, 1),
+          toBooleanInt(active, 1)
+        )
         .run()
     } catch (error) {
       return c.json({ message: 'Failed to create goods item', details: error.message }, 400)
@@ -161,6 +171,8 @@ export const createGoodsRoutes = () => {
       name: payload?.name,
       type: payload?.type,
       default_price: payload?.defaultPrice !== undefined ? Number(payload.defaultPrice) : undefined,
+      description: payload?.description,
+      brand: payload?.brand,
       taxable: payload?.taxable !== undefined ? toBooleanInt(payload.taxable) : undefined,
       active: payload?.active !== undefined ? toBooleanInt(payload.active) : undefined,
     }
