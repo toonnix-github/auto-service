@@ -29,7 +29,11 @@ export const Orders = {
     const qs = new URLSearchParams(params).toString()
     return api(`/orders${qs ? `?${qs}`:''}`)
   },
-  get: (id) => api(`/orders/${id}`)
+  get: (id) => api(`/orders/${id}`),
+  create: (payload) => api('/orders', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  }),
 }
 
 export const Vehicles = {
