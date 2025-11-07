@@ -29,7 +29,11 @@ export const Orders = {
     const qs = new URLSearchParams(params).toString()
     return api(`/orders${qs ? `?${qs}`:''}`)
   },
-  get: (id) => api(`/orders/${id}`)
+  get: (id) => api(`/orders/${id}`),
+  create: (payload) => api('/orders', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  }),
 }
 
 export const Vehicles = {
@@ -64,4 +68,25 @@ export const Customers = {
     body: JSON.stringify(payload),
   }),
   remove: (id) => api(`/customers/${id}`, { method: 'DELETE' }),
+}
+
+export const Goods = {
+  list: (params = {}) => {
+    const qs = new URLSearchParams(params).toString()
+    return api(`/goods${qs ? `?${qs}` : ''}`)
+  },
+}
+
+export const Services = {
+  list: (params = {}) => {
+    const qs = new URLSearchParams(params).toString()
+    return api(`/services${qs ? `?${qs}` : ''}`)
+  },
+}
+
+export const Parts = {
+  list: (params = {}) => {
+    const qs = new URLSearchParams(params).toString()
+    return api(`/parts${qs ? `?${qs}` : ''}`)
+  },
 }

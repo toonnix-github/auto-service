@@ -73,6 +73,8 @@ CREATE TABLE IF NOT EXISTS orders (
   subtotal REAL NOT NULL DEFAULT 0,
   vat REAL NOT NULL DEFAULT 0,
   total REAL NOT NULL DEFAULT 0,
+  payment_method TEXT,
+  is_credit INTEGER NOT NULL DEFAULT 0,
   notes TEXT,
   tech_note TEXT,
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
@@ -89,17 +91,20 @@ CREATE TABLE IF NOT EXISTS order_items (
 
   goods_id TEXT REFERENCES goods(id),
   service_id TEXT REFERENCES services(id),
+  part_id TEXT REFERENCES parts(id),
 
-  type TEXT NOT NULL,                       -- 'goods' or 'service'
+  type TEXT NOT NULL,                       -- 'goods' or 'service' or 'part'
   name_snapshot TEXT NOT NULL,
   unit_price REAL NOT NULL,
   qty REAL NOT NULL,
   line_total REAL NOT NULL,
 
   CHECK (
-    (goods_id IS NOT NULL AND service_id IS NULL)
+    (goods_id IS NOT NULL AND service_id IS NULL AND part_id IS NULL)
     OR
-    (goods_id IS NULL AND service_id IS NOT NULL)
+    (goods_id IS NULL AND service_id IS NOT NULL AND part_id IS NULL)
+    OR
+    (goods_id IS NULL AND service_id IS NULL AND part_id IS NOT NULL)
   )
 );
 

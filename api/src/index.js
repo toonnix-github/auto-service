@@ -6,6 +6,36 @@ import { createGoodsRoutes } from './routes/goods'
 import { createPartRoutes } from './routes/parts'
 import { createServiceRoutes } from './routes/services'
 
+const ORDER_ITEM_TYPES = new Set(['goods', 'service', 'part'])
+
+const fetchOrderDetail = async (db, id) => {
+  const orderSql = `
+    SELECT o.*, c.name AS customer_name, c.phone, v.brand, v.model, v.license_plate
+    FROM orders o
+    JOIN customers c ON c.id = o.customer_id
+    JOIN vehicles v ON v.id = o.vehicle_id
+    WHERE o.id = ?
+  `
+  const order = await db.prepare(orderSql).bind(id).first()
+  if (!order) return null
+
+  const itemsSql = `
+    SELECT id, no, type, goods_id, service_id, part_id, name_snapshot, unit_price, qty, line_total
+    FROM order_items
+    WHERE order_id = ?
+    ORDER BY no ASC
+  `
+  const items = (await db.prepare(itemsSql).bind(id).all()).results
+
+  return { order, items }
+}
+
+const generateOrderNo = (date) => {
+  const base = (date || new Date().toISOString().slice(0, 10)).replace(/-/g, '')
+  const random = Math.floor(Math.random() * 9000) + 1000
+  return `SO-${base}-${random}`
+}
+
 const app = new Hono()
 
 app.use('*', cors({ origin: '*', allowHeaders: ['Content-Type'] }))
@@ -37,6 +67,7 @@ app.get('/api/orders', async (c) => {
 
   const sql = `
     SELECT o.id, o.order_no, o.date, o.status, o.subtotal, o.vat, o.total,
+           o.payment_method, o.is_credit,
            c.name AS customer_name, c.phone,
            v.brand, v.model, v.license_plate,
            (SELECT COUNT(*) FROM order_items oi WHERE oi.order_id = o.id) AS items
@@ -53,21 +84,168 @@ app.get('/api/orders', async (c) => {
 // Order detail (with items)
 app.get('/api/orders/:id', async (c) => {
   const id = c.req.param('id')
+  const data = await fetchOrderDetail(c.env.auto_service_db, id)
+  if (!data) return c.notFound()
 
-  const orderSql = `
-    SELECT o.*, c.name AS customer_name, c.phone, v.brand, v.model, v.license_plate
-    FROM orders o
-    JOIN customers c ON c.id = o.customer_id
-    JOIN vehicles v ON v.id = o.vehicle_id
-    WHERE o.id = ?
-  `
-  const order = await c.env.auto_service_db.prepare(orderSql).bind(id).first()
-  if (!order) return c.notFound()
+  return c.json(data)
+})
 
-  const itemsSql = `SELECT id, no, type, name_snapshot, unit_price, qty, line_total FROM order_items WHERE order_id = ? ORDER BY no ASC`
-  const items = (await c.env.auto_service_db.prepare(itemsSql).bind(id).all()).results
+app.post('/api/orders', async (c) => {
+  let payload
+  try {
+    payload = await c.req.json()
+  } catch (error) {
+    return c.json({ message: 'Invalid JSON payload' }, 400)
+  }
 
-  return c.json({ order, items })
+  const orderInput = payload?.order || {}
+  const itemsInput = Array.isArray(payload?.items) ? payload.items : []
+
+  if (!orderInput.customerId || !orderInput.vehicleId) {
+    return c.json({ message: 'customerId and vehicleId are required' }, 400)
+  }
+
+  if (!itemsInput.length) {
+    return c.json({ message: 'At least one item is required' }, 400)
+  }
+
+  const vatRateRaw = orderInput.vatRate !== undefined ? Number(orderInput.vatRate) : 0.07
+  if (!Number.isFinite(vatRateRaw) || vatRateRaw < 0) {
+    return c.json({ message: 'vatRate must be a positive number' }, 400)
+  }
+
+  const date = (orderInput.date || new Date().toISOString().slice(0, 10)).slice(0, 10)
+  let orderNo = (orderInput.orderNo || generateOrderNo(date)).trim()
+  if (!orderNo) {
+    orderNo = generateOrderNo(date)
+  }
+
+  const cleanedItems = []
+  let subtotal = 0
+
+  for (const [index, item] of itemsInput.entries()) {
+    const type = typeof item?.type === 'string' ? item.type.toLowerCase() : ''
+    if (!ORDER_ITEM_TYPES.has(type)) {
+      return c.json({ message: `Invalid item type at index ${index}` }, 400)
+    }
+
+    const sourceId = item?.sourceId
+    if (!sourceId) {
+      return c.json({ message: `Missing sourceId for item at index ${index}` }, 400)
+    }
+
+    const qty = Number(item?.qty ?? 0)
+    const unitPrice = Number(item?.unitPrice ?? 0)
+    if (!Number.isFinite(qty) || qty <= 0) {
+      return c.json({ message: `Invalid qty for item at index ${index}` }, 400)
+    }
+    if (!Number.isFinite(unitPrice) || unitPrice < 0) {
+      return c.json({ message: `Invalid unitPrice for item at index ${index}` }, 400)
+    }
+
+    const lineTotal = Number((qty * unitPrice).toFixed(2))
+    subtotal += lineTotal
+
+    cleanedItems.push({
+      type,
+      sourceId,
+      qty,
+      unitPrice,
+      lineTotal,
+      nameSnapshot: item?.nameSnapshot || item?.name || '',
+    })
+  }
+
+  subtotal = Number(subtotal.toFixed(2))
+  const vat = Number((subtotal * vatRateRaw).toFixed(2))
+  const total = Number((subtotal + vat).toFixed(2))
+
+  const orderId = crypto.randomUUID()
+  const odometer = orderInput.odometer === null || orderInput.odometer === undefined || orderInput.odometer === ''
+    ? null
+    : Number(orderInput.odometer)
+  if (odometer !== null && !Number.isFinite(odometer)) {
+    return c.json({ message: 'odometer must be numeric' }, 400)
+  }
+
+  const notes = orderInput.notes ?? null
+  const techNote = orderInput.techNote ?? null
+  const paymentMethod = orderInput.paymentMethod ? String(orderInput.paymentMethod) : null
+  const isCredit = orderInput.credit ? 1 : 0
+
+  const insertOrder = async () => {
+    const stmt = `
+      INSERT INTO orders (
+        id, order_no, date, customer_id, vehicle_id, odometer, status, vat_rate,
+        subtotal, vat, total, payment_method, is_credit, notes, tech_note, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+    `
+
+    await c.env.auto_service_db.prepare(stmt).bind(
+      orderId,
+      orderNo,
+      date,
+      orderInput.customerId,
+      orderInput.vehicleId,
+      odometer,
+      orderInput.status || 'open',
+      vatRateRaw,
+      subtotal,
+      vat,
+      total,
+      paymentMethod,
+      isCredit,
+      notes,
+      techNote,
+    ).run()
+  }
+
+  let attempts = 0
+  while (true) {
+    try {
+      await insertOrder()
+      break
+    } catch (error) {
+      const message = error?.message || ''
+      const isOrderNoConflict = message.includes('UNIQUE') && message.includes('orders.order_no')
+      if (isOrderNoConflict && !orderInput.orderNo && attempts < 4) {
+        attempts += 1
+        orderNo = generateOrderNo(date)
+        continue
+      }
+      return c.json({ message: 'Failed to create order', details: message }, 400)
+    }
+  }
+
+  for (const [index, item] of cleanedItems.entries()) {
+    const itemId = crypto.randomUUID()
+    const goodsId = item.type === 'goods' ? item.sourceId : null
+    const serviceId = item.type === 'service' ? item.sourceId : null
+    const partId = item.type === 'part' ? item.sourceId : null
+
+    const stmt = `
+      INSERT INTO order_items (
+        id, order_id, no, goods_id, service_id, part_id, type, name_snapshot, unit_price, qty, line_total
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `
+
+    await c.env.auto_service_db.prepare(stmt).bind(
+      itemId,
+      orderId,
+      index + 1,
+      goodsId,
+      serviceId,
+      partId,
+      item.type,
+      item.nameSnapshot || '',
+      item.unitPrice,
+      item.qty,
+      item.lineTotal,
+    ).run()
+  }
+
+  const data = await fetchOrderDetail(c.env.auto_service_db, orderId)
+  return c.json(data, 201)
 })
 
 app.route('/api/customers', createCustomerRoutes())

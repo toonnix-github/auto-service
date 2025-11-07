@@ -26,10 +26,11 @@ INSERT INTO services(id,code,name,category,default_price,taxable,duration_minute
   ('s_srv_2','SRV-TIRE-ROT','Tire Rotation','tire',400,1,25,1);
 
 -- orders
-INSERT INTO orders(id,order_no,date,customer_id,vehicle_id,odometer,status,vat_rate,subtotal,vat,total,notes,tech_note) VALUES
-  ('o1','SO-202511-0001','2025-11-06','c1','v1',102345,'open',0.07,1750,122.5,1872.5,'น้ำมันเครื่อง+ไส้กรอง+บริการ','ตรวจรอยรั่ว');
+INSERT INTO orders(id,order_no,date,customer_id,vehicle_id,odometer,status,vat_rate,subtotal,vat,total,payment_method,is_credit,notes,tech_note) VALUES
+  ('o1','SO-202511-0001','2025-11-06','c1','v1',102345,'open',0.07,1750,122.5,1872.5,'cash',0,'น้ำมันเครื่อง+ไส้กรอง+บริการ','ตรวจรอยรั่ว');
 
 -- order_items (mix goods + services)
-INSERT INTO order_items(id,order_id,no,goods_id,service_id,type,name_snapshot,unit_price,qty,line_total) VALUES
-  ('i1','o1',1,'g_oil_1',NULL,'goods','Engine Oil 5W-30',800,1,800),
-  ('i2','o1',2,NULL,'s_srv_1','service','Change Engine Oil',500,1,500);
+INSERT INTO order_items(id,order_id,no,goods_id,service_id,part_id,type,name_snapshot,unit_price,qty,line_total) VALUES
+  ('i1','o1',1,'g_oil_1',NULL,NULL,'goods','Engine Oil 5W-30',800,1,800),
+  ('i2','o1',2,NULL,'s_srv_1',NULL,'service','Change Engine Oil',500,1,500),
+  ('i3','o1',3,NULL,NULL,'p_air_filter','part','Air Filter',450,1,450);
