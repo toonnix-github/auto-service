@@ -57,8 +57,13 @@ describe('fetchOrderDetail', () => {
     order_no: 'SO-1',
   }
   const itemRecords = [{ id: 'item-1', qty: 2, line_total: 40 }]
+  const mechanicRecords = [{ id: 'm1', name: 'Jane Doe' }]
 
-  const createDbMock = (order = orderRecord, items = itemRecords) => {
+  const createDbMock = (
+    order = orderRecord,
+    items = itemRecords,
+    mechanics = mechanicRecords,
+  ) => {
     return {
       prepare(sql) {
         if (sql.includes('FROM orders')) {
@@ -83,6 +88,17 @@ describe('fetchOrderDetail', () => {
             },
           }
         }
+        if (sql.includes('FROM order_mechanics')) {
+          return {
+            bind() {
+              return {
+                async all() {
+                  return { results: mechanics }
+                },
+              }
+            },
+          }
+        }
         throw new Error(`Unexpected SQL: ${sql}`)
       },
     }
@@ -95,8 +111,12 @@ describe('fetchOrderDetail', () => {
   })
 
   it('returns order with items when found', async () => {
-    const db = createDbMock(orderRecord, itemRecords)
+    const db = createDbMock(orderRecord, itemRecords, mechanicRecords)
     const detail = await fetchOrderDetail(db, orderRecord.id)
-    assert.deepEqual(detail, { order: orderRecord, items: itemRecords })
+    assert.deepEqual(detail, {
+      order: orderRecord,
+      items: itemRecords,
+      mechanics: mechanicRecords,
+    })
   })
 })

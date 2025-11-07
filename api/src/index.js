@@ -6,6 +6,7 @@ import { createGoodsRoutes } from './routes/goods.js'
 import { createPartRoutes } from './routes/parts.js'
 import { createServiceRoutes } from './routes/services.js'
 import { createCatalogRoutes } from './routes/catalog.js'
+import { createMechanicRoutes } from './routes/mechanics.js'
 
 const ORDER_STATUS_SET = new Set(['draft', 'open', 'in_progress', 'ready', 'closed', 'cancelled'])
 const ITEM_TYPES = new Set(['goods', 'service', 'part'])
@@ -61,7 +62,16 @@ const fetchOrderDetail = async (db, id) => {
   `
   const items = (await db.prepare(itemsSql).bind(id).all()).results
 
-  return { order, items }
+  const mechanicsSql = `
+    SELECT m.id, m.name
+    FROM order_mechanics om
+    JOIN mechanics m ON m.id = om.mechanic_id
+    WHERE om.order_id = ?
+    ORDER BY om.position ASC, m.name ASC
+  `
+  const mechanics = (await db.prepare(mechanicsSql).bind(id).all()).results
+
+  return { order, items, mechanics }
 }
 
 const app = new Hono()
@@ -184,6 +194,33 @@ app.post('/api/orders', async (c) => {
     odometer = Math.round(parsedOdometer)
   }
 
+  const mechanicsInput = Array.isArray(payload?.mechanics) ? payload.mechanics : []
+  const mechanicIds = []
+  const mechanicSeen = new Set()
+  for (const raw of mechanicsInput) {
+    if (!raw && raw !== 0) continue
+    const id = String(raw).trim()
+    if (!id || mechanicSeen.has(id)) continue
+    mechanicSeen.add(id)
+    mechanicIds.push(id)
+  }
+
+  if (mechanicIds.length > 5) {
+    return c.json({ message: 'You can assign up to 5 mechanics per order' }, 400)
+  }
+
+  if (mechanicIds.length) {
+    const placeholders = mechanicIds.map(() => '?').join(', ')
+    const mechanicsSql = `SELECT id FROM mechanics WHERE id IN (${placeholders})`
+    const existing = await db.prepare(mechanicsSql).bind(...mechanicIds).all()
+    const foundIds = new Set((existing?.results ?? []).map((row) => row.id))
+    for (const id of mechanicIds) {
+      if (!foundIds.has(id)) {
+        return c.json({ message: `Mechanic ${id} not found` }, 400)
+      }
+    }
+  }
+
   const resolvedItems = []
   for (let index = 0; index < itemsInput.length; index += 1) {
     const item = itemsInput[index]
@@ -286,6 +323,16 @@ app.post('/api/orders', async (c) => {
     )
   }
 
+  for (let index = 0; index < mechanicIds.length; index += 1) {
+    statements.push(
+      db
+        .prepare(
+          'INSERT INTO order_mechanics (order_id, mechanic_id, position) VALUES (?, ?, ?)',
+        )
+        .bind(orderId, mechanicIds[index], index + 1),
+    )
+  }
+
   try {
     await db.batch(statements)
   } catch (error) {
@@ -302,6 +349,7 @@ app.route('/api/goods', createGoodsRoutes())
 app.route('/api/parts', createPartRoutes())
 app.route('/api/services', createServiceRoutes())
 app.route('/api/catalog', createCatalogRoutes())
+app.route('/api/mechanics', createMechanicRoutes())
 
 export default app
 

@@ -60,6 +60,7 @@ export default function OrderDetail() {
 
   const order = data?.order
   const items = data?.items ?? []
+  const mechanics = data?.mechanics ?? []
   const odometerValue = order?.odometer
   const formattedOdometer = odometerValue === null || odometerValue === undefined
     ? null
@@ -112,6 +113,22 @@ export default function OrderDetail() {
                 <Chip color="info" label={order.status} />
                 <Typography variant="body2" sx={{ mt: 1 }}>Date: {order.date}</Typography>
               </>
+            )}
+          </Card>
+        </Grid>
+        <Grid item xs={12}>
+          <Card sx={{ p: 2, minHeight: 96 }}>
+            <Typography variant="subtitle2" color="text.secondary">Mechanics</Typography>
+            {loading ? <SkeletonLine width="40%" /> : (
+              mechanics.length ? (
+                <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ mt: 1 }}>
+                  {mechanics.map((mechanic) => (
+                    <Chip key={mechanic.id} label={mechanic.name} size="small" variant="outlined" />
+                  ))}
+                </Stack>
+              ) : (
+                <Typography variant="body2" sx={{ mt: 1 }}>—</Typography>
+              )
             )}
           </Card>
         </Grid>

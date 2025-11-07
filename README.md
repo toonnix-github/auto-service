@@ -42,3 +42,15 @@ wrangler d1 execute auto_service_db --local --file=db/migrations/002_add_orders_
 ```
 
 If you need to update a remote D1 database instead of the local preview, remove the `--local` flag.
+
+### Error: `no such table: mechanics`
+
+Older databases that predate the mechanics feature will fail when looking up
+assigned mechanics for an order. Run the latest migration to create the
+supporting tables:
+
+```bash
+wrangler d1 execute auto_service_db --local --file=db/migrations/004_add_mechanics.sql
+```
+
+Re-run the seed file afterwards if you want the demo mechanic records locally.

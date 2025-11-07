@@ -1,6 +1,6 @@
 import { describe, it, beforeEach, afterEach } from 'node:test'
 import assert from 'node:assert/strict'
-import { api, Orders, Vehicles, Customers, Catalog } from './api.js'
+import { api, Orders, Vehicles, Customers, Catalog, Mechanics } from './api.js'
 
 describe('api helper', () => {
   let originalFetch
@@ -115,5 +115,10 @@ describe('resource helpers build urls correctly', () => {
   it('catalog get fetches the item', async () => {
     await Catalog.get('cat-1')
     assert.ok(calls[0].url.endsWith('/catalog/items/cat-1'))
+  })
+
+  it('mechanics list builds the correct url', async () => {
+    await Mechanics.list({ q: 'krit' })
+    assert.ok(calls[0].url.endsWith('/mechanics?q=krit'))
   })
 })
