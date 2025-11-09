@@ -113,7 +113,6 @@ export default function OrderCreate() {
   const [status, setStatus] = useState('open')
   const [vatRate, setVatRate] = useState(0.07)
   const [notes, setNotes] = useState('')
-  const [techNote, setTechNote] = useState('')
 
   const loadCustomers = useCallback(async (query = '') => {
     setCustomerLoading(true)
@@ -432,7 +431,6 @@ export default function OrderCreate() {
       }
       if (parsedOdometer !== null) payload.odometer = parsedOdometer
       if (notes.trim()) payload.notes = notes.trim()
-      if (techNote.trim()) payload.techNote = techNote.trim()
       if (selectedMechanics.length) {
         payload.mechanics = selectedMechanics.map((mechanic) => mechanic.id)
       }
@@ -779,14 +777,6 @@ export default function OrderCreate() {
                   label="Notes"
                   value={notes}
                   onChange={(event) => setNotes(event.target.value)}
-                  multiline
-                  minRows={3}
-                  InputLabelProps={{ shrink: true }}
-                />
-                <TextField
-                  label="Technician note"
-                  value={techNote}
-                  onChange={(event) => setTechNote(event.target.value)}
                   multiline
                   minRows={3}
                   InputLabelProps={{ shrink: true }}

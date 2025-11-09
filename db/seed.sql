@@ -232,8 +232,7 @@ INSERT INTO
     subtotal,
     vat,
     total,
-    notes,
-    tech_note
+    notes
   )
 VALUES
   (
@@ -248,8 +247,7 @@ VALUES
     1710,
     119.7,
     1829.7,
-    'น้ำมันเครื่อง+อะไหล่+บริการ',
-    'ตรวจรอยรั่ว'
+    'น้ำมันเครื่อง+อะไหล่+บริการ'
   );
 
 -- order_items (mix goods + services + parts)

@@ -94,7 +94,6 @@ CREATE TABLE
     vat REAL NOT NULL DEFAULT 0,
     total REAL NOT NULL DEFAULT 0,
     notes TEXT,
-    tech_note TEXT,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
     updated_at TEXT
   );
