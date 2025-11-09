@@ -29,6 +29,7 @@ import CircularProgress from '@mui/material/CircularProgress'
 import { Orders, Customers, Vehicles, Catalog, Mechanics } from '../lib/api'
 
 const steps = ['Customer', 'Vehicle', 'Items', 'Review']
+const DEFAULT_VAT_RATE = 0.07
 const ORDER_STATUSES = [
   { value: 'draft', label: 'Draft' },
   { value: 'open', label: 'Open' },
@@ -111,7 +112,7 @@ export default function OrderCreate() {
   const [orderDate, setOrderDate] = useState(() => new Date().toISOString().slice(0, 10))
   const [odometer, setOdometer] = useState('')
   const [status, setStatus] = useState('open')
-  const [vatRate, setVatRate] = useState(0.07)
+  const [includeVat, setIncludeVat] = useState(true)
   const [notes, setNotes] = useState('')
 
   const loadCustomers = useCallback(async (query = '') => {
@@ -246,10 +247,11 @@ export default function OrderCreate() {
   const totals = useMemo(() => {
     const subtotal = roundCurrency(items.reduce((sum, item) => sum + item.price * item.qty, 0))
     const taxableSubtotal = roundCurrency(items.reduce((sum, item) => item.taxable ? sum + item.price * item.qty : sum, 0))
+    const vatRate = includeVat ? DEFAULT_VAT_RATE : 0
     const vat = roundCurrency(taxableSubtotal * vatRate)
     const total = roundCurrency(subtotal + vat)
-    return { subtotal, vat, total }
-  }, [items, vatRate])
+    return { subtotal, vat, total, vatRate }
+  }, [includeVat, items])
 
   const handleNext = () => {
     setGlobalError('')
@@ -422,7 +424,7 @@ export default function OrderCreate() {
         vehicleId: vehicle.id,
         date: orderDate,
         status,
-        vatRate,
+        vatRate: includeVat ? DEFAULT_VAT_RATE : 0,
         items: items.map((item) => ({
           type: item.itemType,
           sourceId: item.sourceId,
@@ -650,7 +652,10 @@ export default function OrderCreate() {
             {renderItemsTable(true)}
             <Stack direction="row" spacing={4} justifyContent="flex-end">
               <SummaryValue label="Subtotal" value={totals.subtotal} />
-              <SummaryValue label="VAT" value={totals.vat} />
+              <SummaryValue
+                label={`VAT (${(totals.vatRate * 100).toFixed(0)}%)`}
+                value={totals.vat}
+              />
               <SummaryValue label="Total" value={totals.total} strong />
             </Stack>
           </Stack>
@@ -720,7 +725,10 @@ export default function OrderCreate() {
             {renderItemsTable(false)}
             <Stack direction="row" spacing={4} justifyContent="flex-end">
               <SummaryValue label="Subtotal" value={totals.subtotal} />
-              <SummaryValue label="VAT" value={totals.vat} />
+              <SummaryValue
+                label={`VAT (${(totals.vatRate * 100).toFixed(0)}%)`}
+                value={totals.vat}
+              />
               <SummaryValue label="Total" value={totals.total} strong />
             </Stack>
             <Card variant="outlined" sx={{ p: 2 }}>
@@ -756,22 +764,16 @@ export default function OrderCreate() {
                     ))}
                   </TextField>
                   <TextField
-                    label="VAT rate (%)"
-                    type="number"
-                    value={Number((vatRate * 100).toFixed(2))}
-                    onChange={(event) => {
-                      const raw = event.target.value
-                      if (raw === '') {
-                        setVatRate(0)
-                        return
-                      }
-                      const numeric = Number(raw)
-                      if (!Number.isFinite(numeric) || numeric < 0) return
-                      setVatRate(numeric / 100)
-                    }}
+                    select
+                    label="Include VAT?"
+                    value={includeVat ? 'yes' : 'no'}
+                    onChange={(event) => setIncludeVat(event.target.value === 'yes')}
                     InputLabelProps={{ shrink: true }}
                     sx={{ width: { xs: '100%', sm: 220 } }}
-                  />
+                  >
+                    <MenuItem value="yes">Yes (7%)</MenuItem>
+                    <MenuItem value="no">No (0%)</MenuItem>
+                  </TextField>
                 </Stack>
                 <TextField
                   label="Notes"
