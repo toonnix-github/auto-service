@@ -273,15 +273,14 @@ app.post('/api/orders', async (c) => {
   const nowIso = new Date().toISOString()
 
   const notes = typeof payload?.notes === 'string' ? payload.notes.trim() || null : null
-  const techNote = typeof payload?.techNote === 'string' ? payload.techNote.trim() || null : null
 
   const statements = [
     db
       .prepare(`
         INSERT INTO orders (
           id, order_no, date, customer_id, vehicle_id, odometer, status, vat_rate,
-          subtotal, vat, total, notes, tech_note, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          subtotal, vat, total, notes, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `)
       .bind(
         orderId,
@@ -296,7 +295,6 @@ app.post('/api/orders', async (c) => {
         vat,
         total,
         notes,
-        techNote,
         nowIso,
         nowIso,
       ),
