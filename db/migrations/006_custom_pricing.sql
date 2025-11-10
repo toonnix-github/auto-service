@@ -1,3 +1,7 @@
+PRAGMA foreign_keys=OFF;
+
+BEGIN TRANSACTION;
+
 -- Add unit_price column to order_items and backfill from existing default prices
 ALTER TABLE order_items ADD COLUMN unit_price REAL NOT NULL DEFAULT 0;
 
@@ -120,3 +124,7 @@ SELECT
   s.active,
   s.created_at
 FROM services s;
+
+COMMIT;
+
+PRAGMA foreign_keys=ON;
