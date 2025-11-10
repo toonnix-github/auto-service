@@ -1,11 +1,36 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
-import { roundCurrency, generateOrderNumber, fetchOrderDetail } from './index.js'
+import {
+  roundCurrency,
+  generateOrderNumber,
+  fetchOrderDetail,
+  parseDecimalInput,
+} from './index.js'
 
 describe('roundCurrency', () => {
   it('rounds to two decimal places', () => {
     assert.equal(roundCurrency(10.005), 10.01)
     assert.equal(roundCurrency(10.004), 10)
+  })
+})
+
+describe('parseDecimalInput', () => {
+  it('returns NaN for missing values', () => {
+    assert.ok(Number.isNaN(parseDecimalInput(undefined)))
+    assert.ok(Number.isNaN(parseDecimalInput(null)))
+    assert.ok(Number.isNaN(parseDecimalInput('')))
+  })
+
+  it('parses strings with currency formatting', () => {
+    assert.equal(parseDecimalInput('3,500'), 3500)
+    assert.equal(parseDecimalInput('฿3,500.75'), 3500.75)
+    assert.equal(parseDecimalInput('1.234,56'), 1234.56)
+    assert.equal(parseDecimalInput('1,234.56'), 1234.56)
+    assert.equal(parseDecimalInput('  2500  '), 2500)
+  })
+
+  it('preserves numeric input', () => {
+    assert.equal(parseDecimalInput(42.5), 42.5)
   })
 })
 

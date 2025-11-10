@@ -11,6 +11,59 @@ import { createMechanicRoutes } from './routes/mechanics.js'
 const ORDER_STATUS_SET = new Set(['draft', 'open', 'in_progress', 'ready', 'closed', 'cancelled'])
 const ITEM_TYPES = new Set(['goods', 'service', 'part'])
 
+const parseDecimalInput = (value) => {
+  if (value === undefined || value === null) {
+    return Number.NaN
+  }
+
+  if (typeof value === 'number') {
+    return value
+  }
+
+  const stringValue = String(value).trim()
+  if (!stringValue) {
+    return Number.NaN
+  }
+
+  let sanitized = stringValue.replace(/\s/g, '')
+  sanitized = sanitized.replace(/[^0-9.,-]/g, '')
+  if (!sanitized) {
+    return Number.NaN
+  }
+
+  const isNegative = sanitized.startsWith('-')
+  sanitized = sanitized.replace(/-/g, '')
+  if (!sanitized) {
+    return Number.NaN
+  }
+  if (isNegative) {
+    sanitized = `-${sanitized}`
+  }
+
+  const commaCount = (sanitized.match(/,/g) || []).length
+  const dotCount = (sanitized.match(/\./g) || []).length
+
+  if (commaCount && !dotCount) {
+    if (/^-?\d{1,3}(,\d{3})+$/.test(sanitized)) {
+      sanitized = sanitized.replace(/,/g, '')
+    } else if (commaCount === 1) {
+      sanitized = sanitized.replace(',', '.')
+    } else {
+      sanitized = sanitized.replace(/,/g, '')
+    }
+  } else if (commaCount && dotCount) {
+    if (sanitized.lastIndexOf(',') > sanitized.lastIndexOf('.')) {
+      sanitized = sanitized.replace(/\./g, '').replace(/,/g, '.')
+    } else {
+      sanitized = sanitized.replace(/,/g, '')
+    }
+  }
+
+  const normalized = sanitized.replace(/,/g, '')
+  const number = Number(normalized)
+  return Number.isFinite(number) ? number : Number.NaN
+}
+
 const roundCurrency = (value) => Math.round((Number(value) + Number.EPSILON) * 100) / 100
 
 const generateOrderNumber = async (db, date) => {
@@ -226,7 +279,7 @@ app.post('/api/orders', async (c) => {
     const item = itemsInput[index]
     const type = String(item?.type || '').toLowerCase()
     const sourceId = item?.sourceId
-    const qtyNumber = Number(item?.qty)
+    const qtyNumber = parseDecimalInput(item?.qty)
 
     if (!ITEM_TYPES.has(type)) {
       return c.json({ message: `Item ${index + 1} has invalid type` }, 400)
@@ -239,7 +292,7 @@ app.post('/api/orders', async (c) => {
     }
 
     const unitPriceRaw = item?.unitPrice ?? item?.price
-    const unitPriceNumber = Number(unitPriceRaw)
+    const unitPriceNumber = parseDecimalInput(unitPriceRaw)
 
     if (!Number.isFinite(unitPriceNumber) || unitPriceNumber < 0) {
       return c.json({ message: `Item ${index + 1} price must be zero or a positive number` }, 400)
@@ -359,4 +412,11 @@ app.route('/api/mechanics', createMechanicRoutes())
 
 export default app
 
-export { ORDER_STATUS_SET, ITEM_TYPES, roundCurrency, generateOrderNumber, fetchOrderDetail }
+export {
+  ORDER_STATUS_SET,
+  ITEM_TYPES,
+  roundCurrency,
+  parseDecimalInput,
+  generateOrderNumber,
+  fetchOrderDetail,
+}
