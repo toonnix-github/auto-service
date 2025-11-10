@@ -11,6 +11,7 @@ import {
   DialogContent,
   DialogTitle,
   Divider,
+  FormControlLabel,
   MenuItem,
   Stack,
   Step,
@@ -26,6 +27,7 @@ import {
 } from '@mui/material'
 import Autocomplete from '@mui/material/Autocomplete'
 import CircularProgress from '@mui/material/CircularProgress'
+import Switch from '@mui/material/Switch'
 import { Orders, Customers, Vehicles, Catalog, Mechanics } from '../lib/api'
 
 const steps = ['Customer', 'Vehicle', 'Items', 'Review']
@@ -650,13 +652,34 @@ export default function OrderCreate() {
             </Stack>
             {catalogError ? <Alert severity="error">{catalogError}</Alert> : null}
             {renderItemsTable(true)}
-            <Stack direction="row" spacing={4} justifyContent="flex-end">
-              <SummaryValue label="Subtotal" value={totals.subtotal} />
-              <SummaryValue
-                label={`VAT (${(totals.vatRate * 100).toFixed(0)}%)`}
-                value={totals.vat}
+            <Stack
+              direction={{ xs: 'column', sm: 'row' }}
+              spacing={2}
+              justifyContent="space-between"
+              alignItems={{ xs: 'flex-start', sm: 'center' }}
+            >
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={includeVat}
+                    onChange={(event) => setIncludeVat(event.target.checked)}
+                  />
+                }
+                label="Include VAT (7%)"
               />
-              <SummaryValue label="Total" value={totals.total} strong />
+              <Stack
+                direction={{ xs: 'column', sm: 'row' }}
+                spacing={4}
+                justifyContent="flex-end"
+                alignItems={{ xs: 'flex-start', sm: 'center' }}
+              >
+                <SummaryValue label="Subtotal" value={totals.subtotal} />
+                <SummaryValue
+                  label={`VAT (${(totals.vatRate * 100).toFixed(0)}%)`}
+                  value={totals.vat}
+                />
+                <SummaryValue label="Total" value={totals.total} strong />
+              </Stack>
             </Stack>
           </Stack>
         )
@@ -762,17 +785,6 @@ export default function OrderCreate() {
                         {option.label}
                       </MenuItem>
                     ))}
-                  </TextField>
-                  <TextField
-                    select
-                    label="Include VAT?"
-                    value={includeVat ? 'yes' : 'no'}
-                    onChange={(event) => setIncludeVat(event.target.value === 'yes')}
-                    InputLabelProps={{ shrink: true }}
-                    sx={{ width: { xs: '100%', sm: 220 } }}
-                  >
-                    <MenuItem value="yes">Yes (7%)</MenuItem>
-                    <MenuItem value="no">No (0%)</MenuItem>
                   </TextField>
                 </Stack>
                 <TextField
