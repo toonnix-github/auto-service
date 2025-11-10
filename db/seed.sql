@@ -50,7 +50,6 @@ INSERT INTO
     name,
     type,
     model,
-    default_price,
     description,
     brand,
     taxable,
@@ -63,7 +62,6 @@ VALUES
     'Engine Oil 5W-30',
     'oil',
     'Universal',
-    850,
     'Synthetic engine oil 5W-30',
     'Mobil 1',
     1,
@@ -75,7 +73,6 @@ VALUES
     'Tire 185R14',
     'tire',
     'Universal',
-    3200,
     'Standard car tire 185R14',
     'Michelin',
     1,
@@ -87,7 +84,6 @@ VALUES
     'Air Filter',
     'part',
     'Vios 1.5',
-    450,
     'Air filter for 1.5L Toyota engine',
     'Toyota',
     1,
@@ -99,7 +95,6 @@ VALUES
     'Coolant Bottle',
     'other',
     'Universal',
-    250,
     'Universal coolant 1L',
     'Castrol',
     1,
@@ -114,7 +109,6 @@ INSERT INTO
     name,
     type,
     model,
-    default_price,
     description,
     brand,
     taxable,
@@ -127,7 +121,6 @@ VALUES
     'Spark Plug',
     'engine',
     'Yaris 1.2',
-    180,
     'Standard spark plug for 1.2L engine',
     'NGK',
     1,
@@ -139,7 +132,6 @@ VALUES
     'Wiper Blade',
     'body',
     'Vios',
-    250,
     'Front wiper blade 22 inch',
     'Bosch',
     1,
@@ -151,7 +143,6 @@ VALUES
     'Car Battery 45Ah',
     'electrical',
     'Universal',
-    2200,
     '12V 45Ah car battery',
     'Panasonic',
     1,
@@ -166,7 +157,6 @@ INSERT INTO
     name,
     type,
     model,
-    default_price,
     description,
     brand,
     taxable,
@@ -179,7 +169,6 @@ VALUES
     'Change Engine Oil',
     'maintenance',
     'Universal',
-    500,
     'Replace engine oil and filter',
     NULL,
     1,
@@ -191,7 +180,6 @@ VALUES
     'Tire Rotation',
     'tire',
     'Universal',
-    350,
     'Rotate and balance all tires',
     NULL,
     1,
@@ -203,7 +191,6 @@ VALUES
     'General Inspection',
     'inspection',
     'Universal',
-    600,
     '20-point safety and performance check',
     NULL,
     1,
@@ -260,7 +247,8 @@ INSERT INTO
     service_id,
     part_id,
     type,
-    qty
+    qty,
+    unit_price
   )
 VALUES
   (
@@ -271,7 +259,8 @@ VALUES
     NULL,
     NULL,
     'goods',
-    1
+    1,
+    850
   ),
   (
     'i2',
@@ -281,7 +270,8 @@ VALUES
     's0000001',
     NULL,
     'service',
-    1
+    1,
+    500
   ),
   (
     'i3',
@@ -291,7 +281,8 @@ VALUES
     NULL,
     'p0000001',
     'part',
-    2
+    2,
+    180
   );
 
 -- order_mechanics

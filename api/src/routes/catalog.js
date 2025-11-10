@@ -75,7 +75,6 @@ export const createCatalogRoutes = () => {
         description,
         brand,
         category,
-        price,
         taxable,
         active,
         created_at
@@ -102,7 +101,6 @@ export const createCatalogRoutes = () => {
         description,
         brand,
         category,
-        price,
         taxable,
         active,
         created_at

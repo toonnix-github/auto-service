@@ -50,9 +50,9 @@ const fetchOrderDetail = async (db, id) => {
       oi.no,
       oi.type,
       COALESCE(g.name, s.name, p.name) AS name_snapshot,
-      COALESCE(g.default_price, s.default_price, p.default_price) AS unit_price,
+      oi.unit_price,
       oi.qty,
-      ROUND(oi.qty * COALESCE(g.default_price, s.default_price, p.default_price), 2) AS line_total
+      ROUND(oi.qty * oi.unit_price, 2) AS line_total
     FROM order_items oi
     LEFT JOIN goods g ON g.id = oi.goods_id
     LEFT JOIN services s ON s.id = oi.service_id
@@ -238,25 +238,32 @@ app.post('/api/orders', async (c) => {
       return c.json({ message: `Item ${index + 1} quantity must be greater than zero` }, 400)
     }
 
+    const unitPriceRaw = item?.unitPrice ?? item?.price
+    const unitPriceNumber = Number(unitPriceRaw)
+
+    if (!Number.isFinite(unitPriceNumber) || unitPriceNumber < 0) {
+      return c.json({ message: `Item ${index + 1} price must be zero or a positive number` }, 400)
+    }
+
     let record
     if (type === 'goods') {
-      record = await db.prepare('SELECT id, default_price, taxable FROM goods WHERE id = ?').bind(sourceId).first()
+      record = await db.prepare('SELECT id, taxable FROM goods WHERE id = ?').bind(sourceId).first()
     } else if (type === 'service') {
-      record = await db.prepare('SELECT id, default_price, taxable FROM services WHERE id = ?').bind(sourceId).first()
+      record = await db.prepare('SELECT id, taxable FROM services WHERE id = ?').bind(sourceId).first()
     } else {
-      record = await db.prepare('SELECT id, default_price, taxable FROM parts WHERE id = ?').bind(sourceId).first()
+      record = await db.prepare('SELECT id, taxable FROM parts WHERE id = ?').bind(sourceId).first()
     }
 
     if (!record) {
       return c.json({ message: `Item ${index + 1} not found` }, 400)
     }
 
-    const unitPrice = Number(record.default_price)
+    const unitPrice = roundCurrency(unitPriceNumber)
     resolvedItems.push({
       type,
       sourceId: record.id,
       qty: qtyNumber,
-      unitPrice: Number.isFinite(unitPrice) ? unitPrice : 0,
+      unitPrice,
       taxable: Boolean(record.taxable),
     })
   }
@@ -305,8 +312,8 @@ app.post('/api/orders', async (c) => {
     statements.push(
       db
         .prepare(`
-          INSERT INTO order_items (id, order_id, no, goods_id, service_id, part_id, type, qty)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+          INSERT INTO order_items (id, order_id, no, goods_id, service_id, part_id, type, qty, unit_price)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         `)
         .bind(
           crypto.randomUUID(),
@@ -317,6 +324,7 @@ app.post('/api/orders', async (c) => {
           item.type === 'part' ? item.sourceId : null,
           item.type,
           item.qty,
+          item.unitPrice,
         ),
     )
   }

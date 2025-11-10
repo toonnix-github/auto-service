@@ -104,6 +104,7 @@ export default function OrderCreate() {
   const [itemSearch, setItemSearch] = useState('')
   const [selectedCatalogItem, setSelectedCatalogItem] = useState(null)
   const [itemQty, setItemQty] = useState('1')
+  const [itemPrice, setItemPrice] = useState('')
 
   const [mechanicOptions, setMechanicOptions] = useState([])
   const [mechanicLoading, setMechanicLoading] = useState(false)
@@ -355,7 +356,18 @@ export default function OrderCreate() {
       return
     }
 
-    const price = Number(selectedCatalogItem.price)
+    if (itemPrice === '') {
+      setItemDialogError('Enter a price for the item')
+      return
+    }
+
+    const priceNumber = Number(itemPrice)
+    if (!Number.isFinite(priceNumber) || priceNumber < 0) {
+      setItemDialogError('Price must be zero or a positive number')
+      return
+    }
+
+    const roundedPrice = roundCurrency(priceNumber)
     const key = `${selectedCatalogItem.item_type}:${selectedCatalogItem.item_id}`
     setItems((prev) => {
       const existingIndex = prev.findIndex((item) => item.key === key)
@@ -366,7 +378,7 @@ export default function OrderCreate() {
         itemType: selectedCatalogItem.item_type,
         name: selectedCatalogItem.name,
         code: selectedCatalogItem.source_code,
-        price: Number.isFinite(price) ? price : 0,
+        price: roundedPrice,
         taxable: Boolean(selectedCatalogItem.taxable),
         qty: quantity,
       }
@@ -380,6 +392,7 @@ export default function OrderCreate() {
     setItemDialogOpen(false)
     setSelectedCatalogItem(null)
     setItemQty('1')
+    setItemPrice('')
     setItemDialogError('')
   }
 
@@ -387,6 +400,14 @@ export default function OrderCreate() {
     const value = Number(event.target.value)
     if (!Number.isFinite(value) || value <= 0) return
     setItems((prev) => prev.map((item) => (item.key === key ? { ...item, qty: value } : item)))
+  }
+
+  const handleItemPriceChange = (key) => (event) => {
+    const value = Number(event.target.value)
+    if (!Number.isFinite(value) || value < 0) return
+    setItems((prev) =>
+      prev.map((item) => (item.key === key ? { ...item, price: roundCurrency(value) } : item)),
+    )
   }
 
   const handleRemoveItem = (key) => {
@@ -419,6 +440,12 @@ export default function OrderCreate() {
       return
     }
 
+    const hasInvalidPrice = items.some((item) => !Number.isFinite(item.price) || item.price < 0)
+    if (hasInvalidPrice) {
+      setGlobalError('Each item must have a valid price')
+      return
+    }
+
     setSaving(true)
     try {
       const payload = {
@@ -431,6 +458,7 @@ export default function OrderCreate() {
           type: item.itemType,
           sourceId: item.sourceId,
           qty: item.qty,
+          unitPrice: roundCurrency(item.price),
         })),
       }
       if (parsedOdometer !== null) payload.odometer = parsedOdometer
@@ -490,7 +518,20 @@ export default function OrderCreate() {
                     label={ITEM_TYPE_LABEL[item.itemType] || item.itemType}
                   />
                 </TableCell>
-                <TableCell align="right">{formatCurrency(item.price)}</TableCell>
+                <TableCell align="right">
+                  {editable ? (
+                    <TextField
+                      value={item.price}
+                      onChange={handleItemPriceChange(item.key)}
+                      type="number"
+                      size="small"
+                      inputProps={{ min: 0, step: 0.01 }}
+                      sx={{ width: 120 }}
+                    />
+                  ) : (
+                    formatCurrency(item.price)
+                  )}
+                </TableCell>
                 <TableCell align="right">
                   {editable ? (
                     <TextField
@@ -644,6 +685,7 @@ export default function OrderCreate() {
                   setSelectedCatalogItem(null)
                   setItemQty('1')
                   setItemSearch('')
+                  setItemPrice('')
                   setItemDialogOpen(true)
                 }}
               >
@@ -937,7 +979,14 @@ export default function OrderCreate() {
 
       <Dialog
         open={itemDialogOpen}
-        onClose={() => { if (!catalogLoading) setItemDialogOpen(false) }}
+        onClose={() => {
+          if (!catalogLoading) {
+            setItemDialogOpen(false)
+            setItemDialogError('')
+            setSelectedCatalogItem(null)
+            setItemPrice('')
+          }
+        }}
         maxWidth="sm"
         fullWidth
       >
@@ -960,7 +1009,18 @@ export default function OrderCreate() {
             <Autocomplete
               value={selectedCatalogItem}
               options={filteredCatalog}
-              onChange={(_, value) => setSelectedCatalogItem(value)}
+              onChange={(_, value) => {
+                setSelectedCatalogItem(value)
+                if (value) {
+                  const existing = items.find(
+                    (item) => item.itemType === value.item_type && item.sourceId === value.source_id,
+                  )
+                  setItemPrice(existing ? String(existing.price ?? '') : '')
+                } else {
+                  setItemPrice('')
+                }
+                setItemDialogError('')
+              }}
               inputValue={itemSearch}
               onInputChange={(_, value) => setItemSearch(value)}
               filterOptions={(options) => options}
@@ -974,7 +1034,7 @@ export default function OrderCreate() {
                       <Chip size="small" label={ITEM_TYPE_LABEL[option.item_type] || option.item_type} color={typeChipColor(option.item_type)} />
                     </Stack>
                     <Typography variant="caption" color="text.secondary">
-                      {option.source_code ? `Code: ${option.source_code} • ` : ''}Price: {formatCurrency(option.price)}
+                      {option.source_code ? `Code: ${option.source_code} • ` : ''}Taxable: {option.taxable ? 'Yes' : 'No'}
                     </Typography>
                   </Stack>
                 </li>
@@ -1005,10 +1065,26 @@ export default function OrderCreate() {
               InputLabelProps={{ shrink: true }}
               sx={{ width: { xs: '100%', sm: 200 } }}
             />
+            <TextField
+              label="Unit price"
+              value={itemPrice}
+              onChange={(event) => setItemPrice(event.target.value)}
+              type="number"
+              inputProps={{ min: 0, step: 0.01 }}
+              InputLabelProps={{ shrink: true }}
+              sx={{ width: { xs: '100%', sm: 200 } }}
+            />
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setItemDialogOpen(false)}>
+          <Button
+            onClick={() => {
+              setItemDialogOpen(false)
+              setItemDialogError('')
+              setSelectedCatalogItem(null)
+              setItemPrice('')
+            }}
+          >
             Cancel
           </Button>
           <Button onClick={handleAddItem} variant="contained">

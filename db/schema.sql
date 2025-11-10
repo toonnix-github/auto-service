@@ -26,7 +26,6 @@ CREATE TABLE
     sku TEXT UNIQUE,
     name TEXT NOT NULL,
     type TEXT NOT NULL, -- oil|tire|part|other
-    default_price REAL NOT NULL,
     description TEXT,
     brand TEXT,
     model TEXT,
@@ -44,7 +43,6 @@ CREATE TABLE
     sku TEXT UNIQUE,
     name TEXT NOT NULL,
     type TEXT NOT NULL, -- e.g., engine, body, electrical
-    default_price REAL NOT NULL,
     description TEXT,
     brand TEXT,
     model TEXT,
@@ -62,7 +60,6 @@ CREATE TABLE
     code TEXT UNIQUE, -- e.g., SRV-CHANGE-OIL
     name TEXT NOT NULL, -- e.g., Change Engine Oil
     type TEXT NOT NULL, -- e.g., maintenance, tire, inspection
-    default_price REAL NOT NULL, -- labor price or package price
     description TEXT,
     brand TEXT,
     model TEXT,
@@ -123,6 +120,7 @@ CREATE TABLE
     part_id TEXT REFERENCES parts (id),
     type TEXT NOT NULL, -- 'goods', 'service', or 'part'
     qty REAL NOT NULL,
+    unit_price REAL NOT NULL,
     CHECK (
       (
         goods_id IS NOT NULL
@@ -156,7 +154,6 @@ SELECT
   g.description,
   g.brand,
   g.type AS category,
-  g.default_price AS price,
   g.taxable,
   g.active,
   g.created_at
@@ -172,7 +169,6 @@ SELECT
   p.description,
   p.brand,
   p.type AS category,
-  p.default_price AS price,
   p.taxable,
   p.active,
   p.created_at
@@ -188,7 +184,6 @@ SELECT
   s.description,
   s.brand,
   s.type AS category,
-  s.default_price AS price,
   s.taxable,
   s.active,
   s.created_at
