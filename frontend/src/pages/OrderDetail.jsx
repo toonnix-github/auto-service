@@ -21,39 +21,7 @@ export default function OrderDetail() {
       renderCell: (p) => <Chip size="small" label={p.value} variant="outlined" />,
     },
     { field: 'name_snapshot', headerName: 'Name', flex: 1.4, minWidth: 220 },
-    {
-      field: 'unit_price',
-      headerName: 'Price per Unit',
-      flex: 0.7,
-      minWidth: 100,
-      align: 'right',
-      headerAlign: 'right',
-      renderCell: (p) => {
-        const value = p.row.unit_price
-        if (value === null || value === undefined) return '-'
-        const v = Number(value)
-        return Number.isFinite(v)
-          ? v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-          : '-'
-      },
-    },
     { field: 'qty', headerName: 'Qty', flex: 0.5, minWidth: 80, align: 'right', headerAlign: 'right' },
-    {
-      field: 'line_total',
-      headerName: 'Total',
-      flex: 0.8,
-      minWidth: 110,
-      align: 'right',
-      headerAlign: 'right',
-      renderCell: (p) => {
-        const value = p.row.line_total
-        if (value === null || value === undefined) return '-'
-        const v = Number(value)
-        return Number.isFinite(v)
-          ? v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-          : '-'
-      },
-    },
   ]), [])
 
   useEffect(() => { Orders.get(id).then(setData) }, [id])

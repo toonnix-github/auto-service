@@ -6,6 +6,7 @@ compatibility_date = "2024-12-01"
 "binding" = "auto_service_db"
 "database_name" = "auto_service_db"
 "database_id" = "6391785f-637c-441d-9c18-35458f382895"
+"migrations_dir" = "../db/migrations/"
 
 [vars]
 # set this later to your Pages origin, e.g., https://<yourapp>.pages.dev

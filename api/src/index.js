@@ -50,9 +50,7 @@ const fetchOrderDetail = async (db, id) => {
       oi.no,
       oi.type,
       COALESCE(g.name, s.name, p.name) AS name_snapshot,
-      COALESCE(g.default_price, s.default_price, p.default_price) AS unit_price,
-      oi.qty,
-      ROUND(oi.qty * COALESCE(g.default_price, s.default_price, p.default_price), 2) AS line_total
+      oi.qty
     FROM order_items oi
     LEFT JOIN goods g ON g.id = oi.goods_id
     LEFT JOIN services s ON s.id = oi.service_id
@@ -240,33 +238,27 @@ app.post('/api/orders', async (c) => {
 
     let record
     if (type === 'goods') {
-      record = await db.prepare('SELECT id, default_price, taxable FROM goods WHERE id = ?').bind(sourceId).first()
+      record = await db.prepare('SELECT id FROM goods WHERE id = ?').bind(sourceId).first()
     } else if (type === 'service') {
-      record = await db.prepare('SELECT id, default_price, taxable FROM services WHERE id = ?').bind(sourceId).first()
+      record = await db.prepare('SELECT id FROM services WHERE id = ?').bind(sourceId).first()
     } else {
-      record = await db.prepare('SELECT id, default_price, taxable FROM parts WHERE id = ?').bind(sourceId).first()
+      record = await db.prepare('SELECT id FROM parts WHERE id = ?').bind(sourceId).first()
     }
 
     if (!record) {
       return c.json({ message: `Item ${index + 1} not found` }, 400)
     }
 
-    const unitPrice = Number(record.default_price)
     resolvedItems.push({
       type,
       sourceId: record.id,
       qty: qtyNumber,
-      unitPrice: Number.isFinite(unitPrice) ? unitPrice : 0,
-      taxable: Boolean(record.taxable),
     })
   }
 
-  const subtotal = roundCurrency(resolvedItems.reduce((sum, item) => sum + item.unitPrice * item.qty, 0))
-  const taxableSubtotal = roundCurrency(
-    resolvedItems.reduce((sum, item) => (item.taxable ? sum + item.unitPrice * item.qty : sum), 0)
-  )
-  const vat = roundCurrency(taxableSubtotal * vatRate)
-  const total = roundCurrency(subtotal + vat)
+  const subtotal = 0
+  const vat = 0
+  const total = 0
 
   const orderId = crypto.randomUUID()
   const orderNo = await generateOrderNumber(db, orderDate)

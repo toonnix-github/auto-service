@@ -10,7 +10,7 @@ const ensurePartsTable = async (db) => {
 
 const fetchPartById = async (db, id) => {
   const sql = `
-    SELECT p.id, p.sku, p.name, p.type, p.default_price, p.description, p.brand, p.model, p.taxable, p.active, p.created_at
+    SELECT p.id, p.sku, p.name, p.type, p.description, p.brand, p.model, p.taxable, p.active, p.created_at
     FROM parts p
     WHERE p.id = ?
   `
@@ -76,7 +76,7 @@ export const createPartRoutes = () => {
     const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : ''
 
     const sql = `
-      SELECT p.id, p.sku, p.name, p.type, p.default_price, p.description, p.brand, p.model, p.taxable, p.active, p.created_at
+      SELECT p.id, p.sku, p.name, p.type, p.description, p.brand, p.model, p.taxable, p.active, p.created_at
       FROM parts p
       ${whereSql}
       ORDER BY p.created_at DESC, p.name ASC
@@ -106,25 +106,10 @@ export const createPartRoutes = () => {
       return c.json({ message: 'Invalid JSON payload' }, 400)
     }
 
-    const {
-      sku,
-      name,
-      type,
-      defaultPrice,
-      description,
-      brand,
-      model,
-      taxable = true,
-      active = true,
-    } = payload || {}
+    const { sku, name, type, description, brand, model, taxable = true, active = true } = payload || {}
 
-    if (!name || !type || defaultPrice === undefined) {
-      return c.json({ message: 'name, type, and defaultPrice are required' }, 400)
-    }
-
-    const numericPrice = Number(defaultPrice)
-    if (Number.isNaN(numericPrice)) {
-      return c.json({ message: 'defaultPrice must be a number' }, 400)
+    if (!name || !type) {
+      return c.json({ message: 'name and type are required' }, 400)
     }
 
     const id = payload?.id || crypto.randomUUID()
@@ -136,14 +121,13 @@ export const createPartRoutes = () => {
           sku,
           name,
           type,
-          default_price,
           description,
           brand,
           model,
           taxable,
           active
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       `
       await c.env.auto_service_db
         .prepare(stmt)
@@ -152,7 +136,6 @@ export const createPartRoutes = () => {
           sku ?? null,
           name,
           type ?? null,
-          numericPrice,
           description ?? null,
           brand ?? null,
           model ?? null,
@@ -182,15 +165,10 @@ export const createPartRoutes = () => {
       return c.json({ message: 'Invalid JSON payload' }, 400)
     }
 
-    if (payload?.defaultPrice !== undefined && Number.isNaN(Number(payload.defaultPrice))) {
-      return c.json({ message: 'defaultPrice must be a number' }, 400)
-    }
-
     const fields = {
       sku: payload?.sku,
       name: payload?.name,
       type: payload?.type,
-      default_price: payload?.defaultPrice !== undefined ? Number(payload.defaultPrice) : undefined,
       description: payload?.description,
       brand: payload?.brand,
       model: payload?.model,

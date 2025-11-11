@@ -1,6 +1,10 @@
+PRAGMA defer_foreign_keys = ON;
+
 -- customers
+DROP TABLE IF EXISTS customers;
+
 CREATE TABLE
-  IF NOT EXISTS customers (
+  customers (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
     phone TEXT NOT NULL,
@@ -9,8 +13,10 @@ CREATE TABLE
   );
 
 -- vehicles
+DROP TABLE IF EXISTS vehicles;
+
 CREATE TABLE
-  IF NOT EXISTS vehicles (
+  vehicles (
     id TEXT PRIMARY KEY,
     customer_id TEXT NOT NULL REFERENCES customers (id),
     brand TEXT,
@@ -20,13 +26,14 @@ CREATE TABLE
   );
 
 -- goods (physical catalog: oil, tire, part, other)
+DROP TABLE IF EXISTS goods;
+
 CREATE TABLE
   IF NOT EXISTS goods (
     id TEXT PRIMARY KEY,
     sku TEXT UNIQUE,
     name TEXT NOT NULL,
     type TEXT NOT NULL, -- oil|tire|part|other
-    default_price REAL NOT NULL,
     description TEXT,
     brand TEXT,
     model TEXT,
@@ -38,13 +45,14 @@ CREATE TABLE
 CREATE INDEX IF NOT EXISTS idx_goods_sku ON goods (sku);
 
 -- parts (vehicle parts catalog)
+DROP TABLE IF EXISTS parts;
+
 CREATE TABLE
   IF NOT EXISTS parts (
     id TEXT PRIMARY KEY,
     sku TEXT UNIQUE,
     name TEXT NOT NULL,
     type TEXT NOT NULL, -- e.g., engine, body, electrical
-    default_price REAL NOT NULL,
     description TEXT,
     brand TEXT,
     model TEXT,
@@ -56,13 +64,14 @@ CREATE TABLE
 CREATE INDEX IF NOT EXISTS idx_parts_sku ON parts (sku);
 
 -- services (labor/service catalog)
+DROP TABLE IF EXISTS services;
+
 CREATE TABLE
   IF NOT EXISTS services (
     id TEXT PRIMARY KEY,
     code TEXT UNIQUE, -- e.g., SRV-CHANGE-OIL
     name TEXT NOT NULL, -- e.g., Change Engine Oil
     type TEXT NOT NULL, -- e.g., maintenance, tire, inspection
-    default_price REAL NOT NULL, -- labor price or package price
     description TEXT,
     brand TEXT,
     model TEXT,
@@ -72,6 +81,8 @@ CREATE TABLE
   );
 
 -- mechanics (service technicians)
+DROP TABLE IF EXISTS mechanics;
+
 CREATE TABLE
   IF NOT EXISTS mechanics (
     id TEXT PRIMARY KEY,
@@ -80,6 +91,8 @@ CREATE TABLE
   );
 
 -- orders
+DROP TABLE IF EXISTS orders;
+
 CREATE TABLE
   IF NOT EXISTS orders (
     id TEXT PRIMARY KEY,
@@ -103,6 +116,8 @@ CREATE INDEX IF NOT EXISTS idx_orders_status ON orders (status);
 CREATE INDEX IF NOT EXISTS idx_orders_date ON orders (date);
 
 -- order mechanics assignments (link orders to up to 5 mechanics)
+DROP TABLE IF EXISTS order_mechanics;
+
 CREATE TABLE
   IF NOT EXISTS order_mechanics (
     order_id TEXT NOT NULL REFERENCES orders (id),
@@ -113,6 +128,8 @@ CREATE TABLE
   );
 
 -- order_items (line items) — link to EITHER goods OR services
+DROP TABLE IF EXISTS order_items;
+
 CREATE TABLE
   IF NOT EXISTS order_items (
     id TEXT PRIMARY KEY,
@@ -133,6 +150,8 @@ CREATE TABLE
   );
 
 -- payments (kept for later; not used by MVP UI)
+DROP TABLE IF EXISTS payments;
+
 CREATE TABLE
   IF NOT EXISTS payments (
     id TEXT PRIMARY KEY,
@@ -145,6 +164,8 @@ CREATE TABLE
   );
 
 -- catalog_items view provides unified access to goods, parts, and services
+DROP VIEW IF EXISTS catalog_items;
+
 CREATE VIEW
   IF NOT EXISTS catalog_items AS
 SELECT
@@ -156,7 +177,6 @@ SELECT
   g.description,
   g.brand,
   g.type AS category,
-  g.default_price AS price,
   g.taxable,
   g.active,
   g.created_at
@@ -172,7 +192,6 @@ SELECT
   p.description,
   p.brand,
   p.type AS category,
-  p.default_price AS price,
   p.taxable,
   p.active,
   p.created_at
@@ -188,9 +207,10 @@ SELECT
   s.description,
   s.brand,
   s.type AS category,
-  s.default_price AS price,
   s.taxable,
   s.active,
   s.created_at
 FROM
   services s;
+
+PRAGMA defer_foreign_keys = OFF;
