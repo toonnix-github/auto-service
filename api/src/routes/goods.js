@@ -10,7 +10,7 @@ const ensureGoodsTable = async (db) => {
 
 const fetchGoodsById = async (db, id) => {
   const sql = `
-    SELECT g.id, g.sku, g.name, g.type, g.default_price, g.description, g.brand, g.taxable, g.active, g.created_at
+    SELECT g.id, g.sku, g.name, g.type, g.description, g.brand, g.model, g.taxable, g.active, g.created_at
     FROM goods g
     WHERE g.id = ?
   `
@@ -70,7 +70,7 @@ export const createGoodsRoutes = () => {
     const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : ''
 
     const sql = `
-      SELECT g.id, g.sku, g.name, g.type, g.default_price, g.description, g.brand, g.taxable, g.active, g.created_at
+      SELECT g.id, g.sku, g.name, g.type, g.description, g.brand, g.model, g.taxable, g.active, g.created_at
       FROM goods g
       ${whereSql}
       ORDER BY g.created_at DESC, g.name ASC
@@ -100,26 +100,21 @@ export const createGoodsRoutes = () => {
       return c.json({ message: 'Invalid JSON payload' }, 400)
     }
 
-    const { sku, name, type, defaultPrice, description, brand, taxable = true, active = true } = payload || {}
+    const { sku, name, type, description, brand, model, taxable = true, active = true } = payload || {}
 
-    if (!name || !type || defaultPrice === undefined) {
-      return c.json({ message: 'name, type, and defaultPrice are required' }, 400)
+    if (!name || !type) {
+      return c.json({ message: 'name and type are required' }, 400)
     }
 
     if (!GOODS_TYPES.has(type)) {
       return c.json({ message: `type must be one of: ${Array.from(GOODS_TYPES).join(', ')}` }, 400)
     }
 
-    const numericPrice = Number(defaultPrice)
-    if (Number.isNaN(numericPrice)) {
-      return c.json({ message: 'defaultPrice must be a number' }, 400)
-    }
-
     const id = payload?.id || crypto.randomUUID()
 
     try {
       const stmt = `
-        INSERT INTO goods (id, sku, name, type, default_price, description, brand, taxable, active)
+        INSERT INTO goods (id, sku, name, type, description, brand, model, taxable, active)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       `
       await c.env.auto_service_db
@@ -129,9 +124,9 @@ export const createGoodsRoutes = () => {
           sku ?? null,
           name,
           type,
-          numericPrice,
           description ?? null,
           brand ?? null,
+          model ?? null,
           toBooleanInt(taxable, 1),
           toBooleanInt(active, 1)
         )
@@ -162,17 +157,13 @@ export const createGoodsRoutes = () => {
       return c.json({ message: `type must be one of: ${Array.from(GOODS_TYPES).join(', ')}` }, 400)
     }
 
-    if (payload?.defaultPrice !== undefined && Number.isNaN(Number(payload.defaultPrice))) {
-      return c.json({ message: 'defaultPrice must be a number' }, 400)
-    }
-
     const fields = {
       sku: payload?.sku,
       name: payload?.name,
       type: payload?.type,
-      default_price: payload?.defaultPrice !== undefined ? Number(payload.defaultPrice) : undefined,
       description: payload?.description,
       brand: payload?.brand,
+      model: payload?.model,
       taxable: payload?.taxable !== undefined ? toBooleanInt(payload.taxable) : undefined,
       active: payload?.active !== undefined ? toBooleanInt(payload.active) : undefined,
     }

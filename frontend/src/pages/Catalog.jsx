@@ -23,11 +23,6 @@ const typeChipColor = (type) => {
   }
 }
 
-const formatCurrency = (value) => {
-  if (value === undefined || value === null || Number.isNaN(Number(value))) return '-'
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(value))
-}
-
 export default function CatalogPage() {
   const [rows, setRows] = useState([])
   const [type, setType] = useState('')
@@ -89,13 +84,6 @@ export default function CatalogPage() {
       flex: 0.7,
       minWidth: 160,
       valueGetter: (params) => params || '—',
-    },
-    {
-      field: 'price',
-      headerName: 'Price',
-      flex: 0.6,
-      minWidth: 140,
-      valueFormatter: (params) => formatCurrency(params),
     },
     {
       field: 'category',

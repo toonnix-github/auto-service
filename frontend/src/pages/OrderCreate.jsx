@@ -60,14 +60,6 @@ const typeChipColor = (type) => {
   }
 }
 
-const formatCurrency = (value) => {
-  const number = Number(value)
-  if (!Number.isFinite(number)) return '-'
-  return number.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-}
-
-const roundCurrency = (value) => Math.round((Number(value) + Number.EPSILON) * 100) / 100
-
 export default function OrderCreate() {
   const navigate = useNavigate()
 
@@ -246,14 +238,12 @@ export default function OrderCreate() {
     })
   }, [catalogItems, itemTypeFilter, itemSearch])
 
-  const totals = useMemo(() => {
-    const subtotal = roundCurrency(items.reduce((sum, item) => sum + item.price * item.qty, 0))
-    const taxableSubtotal = roundCurrency(items.reduce((sum, item) => item.taxable ? sum + item.price * item.qty : sum, 0))
-    const vatRate = includeVat ? DEFAULT_VAT_RATE : 0
-    const vat = roundCurrency(taxableSubtotal * vatRate)
-    const total = roundCurrency(subtotal + vat)
-    return { subtotal, vat, total, vatRate }
-  }, [includeVat, items])
+  const totals = useMemo(() => ({
+    subtotal: null,
+    vat: null,
+    total: null,
+    vatRate: includeVat ? DEFAULT_VAT_RATE : 0,
+  }), [includeVat])
 
   const handleNext = () => {
     setGlobalError('')
@@ -355,7 +345,6 @@ export default function OrderCreate() {
       return
     }
 
-    const price = Number(selectedCatalogItem.price)
     const key = `${selectedCatalogItem.item_type}:${selectedCatalogItem.item_id}`
     setItems((prev) => {
       const existingIndex = prev.findIndex((item) => item.key === key)
@@ -366,8 +355,6 @@ export default function OrderCreate() {
         itemType: selectedCatalogItem.item_type,
         name: selectedCatalogItem.name,
         code: selectedCatalogItem.source_code,
-        price: Number.isFinite(price) ? price : 0,
-        taxable: Boolean(selectedCatalogItem.taxable),
         qty: quantity,
       }
       if (existingIndex >= 0) {
@@ -464,9 +451,7 @@ export default function OrderCreate() {
             <TableRow>
               <TableCell>Item</TableCell>
               <TableCell>Type</TableCell>
-              <TableCell align="right">Unit price</TableCell>
               <TableCell align="right">Qty</TableCell>
-              <TableCell align="right">Line total</TableCell>
               {editable ? <TableCell align="right">Actions</TableCell> : null}
             </TableRow>
           </TableHead>
@@ -490,7 +475,6 @@ export default function OrderCreate() {
                     label={ITEM_TYPE_LABEL[item.itemType] || item.itemType}
                   />
                 </TableCell>
-                <TableCell align="right">{formatCurrency(item.price)}</TableCell>
                 <TableCell align="right">
                   {editable ? (
                     <TextField
@@ -505,7 +489,6 @@ export default function OrderCreate() {
                     Number(item.qty).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })
                   )}
                 </TableCell>
-                <TableCell align="right">{formatCurrency(item.price * item.qty)}</TableCell>
                 {editable ? (
                   <TableCell align="right">
                     <Button color="error" size="small" onClick={() => handleRemoveItem(item.key)}>
@@ -973,9 +956,11 @@ export default function OrderCreate() {
                       <Typography fontWeight={600}>{option.name}</Typography>
                       <Chip size="small" label={ITEM_TYPE_LABEL[option.item_type] || option.item_type} color={typeChipColor(option.item_type)} />
                     </Stack>
-                    <Typography variant="caption" color="text.secondary">
-                      {option.source_code ? `Code: ${option.source_code} • ` : ''}Price: {formatCurrency(option.price)}
-                    </Typography>
+                    {option.source_code ? (
+                      <Typography variant="caption" color="text.secondary">
+                        Code: {option.source_code}
+                      </Typography>
+                    ) : null}
                   </Stack>
                 </li>
               )}
@@ -1021,11 +1006,14 @@ export default function OrderCreate() {
 }
 
 function SummaryValue({ label, value, strong }) {
+  const content = value === null || value === undefined
+    ? '—'
+    : Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
   return (
     <Stack alignItems="flex-end">
       <Typography variant="body2" color="text.secondary">{label}</Typography>
       <Typography variant={strong ? 'h6' : 'body1'} fontWeight={strong ? 700 : 600}>
-        {formatCurrency(value)}
+        {content}
       </Typography>
     </Stack>
   )
