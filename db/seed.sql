@@ -18,31 +18,26 @@ DELETE FROM goods;
 
 DELETE FROM services;
 
--- customers
+-- ลูกค้า
 INSERT INTO
   customers (id, name, phone, email)
 VALUES
   (
     'c1',
-    'Somchai Jaidee',
+    'สมชาย ใจดี',
     '0800000001',
     'somchai@example.com'
   ),
-  (
-    'c2',
-    'Suda Dee',
-    '0800000002',
-    'suda@example.com'
-  );
+  ('c2', 'สุดา ดี', '0800000002', 'suda@example.com');
 
--- vehicles
+-- รถยนต์
 INSERT INTO
   vehicles (id, customer_id, brand, model, license_plate)
 VALUES
-  ('v1', 'c1', 'Toyota', 'Vios 1.5', 'กข-1234'),
-  ('v2', 'c2', 'Honda', 'City 1.5', 'ขค-5678');
+  ('v1', 'c1', 'โตโยต้า', 'วีออส 1.5', 'กข-1234'),
+  ('v2', 'c2', 'ฮอนด้า', 'ซิตี้ 1.5', 'ขค-5678');
 
--- GOODS (oil, tire, part, other)
+-- สินค้า (น้ำมัน ยาง อะไหล่ อื่น ๆ)
 INSERT INTO
   goods (
     id,
@@ -59,49 +54,49 @@ VALUES
   (
     'g0000001',
     'OIL-5W30',
-    'Engine Oil 5W-30',
+    'น้ำมันเครื่อง 5W-30',
     'oil',
     'Universal',
-    'Synthetic engine oil 5W-30',
-    'Mobil 1',
+    'น้ำมันเครื่องสังเคราะห์แท้ 5W-30',
+    'โมบิลวัน',
     1,
     1
   ),
   (
     'g0000002',
     'TIRE-185R14',
-    'Tire 185R14',
+    'ยางรถยนต์ 185R14',
     'tire',
     'Universal',
-    'Standard car tire 185R14',
-    'Michelin',
+    'ยางมาตรฐานขนาด 185R14',
+    'มิชลิน',
     1,
     1
   ),
   (
     'g0000003',
     'PART-AIRFILTER',
-    'Air Filter',
+    'กรองอากาศ',
     'part',
-    'Vios 1.5',
-    'Air filter for 1.5L Toyota engine',
-    'Toyota',
+    'วีออส 1.5',
+    'กรองอากาศสำหรับเครื่องยนต์ 1.5 ลิตร โตโยต้า',
+    'โตโยต้า',
     1,
     1
   ),
   (
     'g0000004',
     'MISC-COOLANT',
-    'Coolant Bottle',
+    'น้ำยาหล่อเย็น',
     'other',
     'Universal',
-    'Universal coolant 1L',
-    'Castrol',
+    'น้ำยาหล่อเย็นเอนกประสงค์ ขนาด 1 ลิตร',
+    'คาสตรอล',
     1,
     1
   );
 
--- PARTS (engine, body, electrical)
+-- อะไหล่ (เครื่องยนต์ ตัวถัง ไฟฟ้า)
 INSERT INTO
   parts (
     id,
@@ -118,38 +113,38 @@ VALUES
   (
     'p0000001',
     'PART-SPKPLUG',
-    'Spark Plug',
+    'หัวเทียน',
     'engine',
-    'Yaris 1.2',
-    'Standard spark plug for 1.2L engine',
-    'NGK',
+    'ยาริส 1.2',
+    'หัวเทียนมาตรฐานสำหรับเครื่องยนต์ 1.2 ลิตร',
+    'เอ็นจีเค',
     1,
     1
   ),
   (
     'p0000002',
     'PART-WIPER',
-    'Wiper Blade',
+    'ใบปัดน้ำฝน',
     'body',
-    'Vios',
-    'Front wiper blade 22 inch',
-    'Bosch',
+    'วีออส',
+    'ใบปัดน้ำฝนด้านหน้า ขนาด 22 นิ้ว',
+    'บ๊อช',
     1,
     1
   ),
   (
     'p0000003',
     'PART-BATTERY',
-    'Car Battery 45Ah',
+    'แบตเตอรี่รถยนต์ 45Ah',
     'electrical',
     'Universal',
-    '12V 45Ah car battery',
-    'Panasonic',
+    'แบตเตอรี่รถยนต์ 12V 45Ah',
+    'พานาโซนิค',
     1,
     1
   );
 
--- SERVICES (labor/service catalog)
+-- บริการ (ค่าแรง / แคตตาล็อกบริการ)
 INSERT INTO
   services (
     id,
@@ -166,10 +161,10 @@ VALUES
   (
     's0000001',
     'SRV-CHANGE-OIL',
-    'Change Engine Oil',
+    'เปลี่ยนน้ำมันเครื่อง',
     'maintenance',
     'Universal',
-    'Replace engine oil and filter',
+    'บริการเปลี่ยนน้ำมันเครื่องและกรองน้ำมัน',
     NULL,
     1,
     1
@@ -177,10 +172,10 @@ VALUES
   (
     's0000002',
     'SRV-TIRE-ROTATE',
-    'Tire Rotation',
+    'สลับยางรถยนต์',
     'tire',
     'Universal',
-    'Rotate and balance all tires',
+    'บริการสลับและถ่วงล้อ',
     NULL,
     1,
     1
@@ -188,24 +183,24 @@ VALUES
   (
     's0000003',
     'SRV-INSPECT',
-    'General Inspection',
+    'ตรวจเช็กทั่วไป',
     'inspection',
     'Universal',
-    '20-point safety and performance check',
+    'ตรวจเช็กสภาพรถยนต์ 20 จุดสำคัญ',
     NULL,
     1,
     1
   );
 
--- mechanics
+-- ช่างซ่อม
 INSERT INTO
   mechanics (id, name)
 VALUES
-  ('m1', 'Anan Srithong'),
-  ('m2', 'Krit Nopparat'),
-  ('m3', 'Somporn Dee');
+  ('m1', 'อนันต์ ศรีทอง'),
+  ('m2', 'กฤต นพรัตน์'),
+  ('m3', 'สมพร ดี');
 
--- orders
+-- ใบสั่งซ่อม
 INSERT INTO
   orders (
     id,
@@ -234,10 +229,10 @@ VALUES
     1710,
     119.7,
     1829.7,
-    'น้ำมันเครื่อง+อะไหล่+บริการ'
+    'เปลี่ยนน้ำมันเครื่อง + อะไหล่ + บริการ'
   );
 
--- order_items (mix goods + services + parts)
+-- รายการสั่งซื้อ (สินค้า + บริการ + อะไหล่)
 INSERT INTO
   order_items (
     id,
@@ -250,16 +245,7 @@ INSERT INTO
     qty
   )
 VALUES
-  (
-    'i1',
-    'o1',
-    1,
-    'g0000001',
-    NULL,
-    NULL,
-    'goods',
-    1
-  ),
+  ('i1', 'o1', 1, 'g0000001', NULL, NULL, 'goods', 1),
   (
     'i2',
     'o1',
@@ -270,18 +256,9 @@ VALUES
     'service',
     1
   ),
-  (
-    'i3',
-    'o1',
-    3,
-    NULL,
-    NULL,
-    'p0000001',
-    'part',
-    2
-  );
+  ('i3', 'o1', 3, NULL, NULL, 'p0000001', 'part', 2);
 
--- order_mechanics
+-- ช่างในใบสั่งซ่อม
 INSERT INTO
   order_mechanics (order_id, mechanic_id, position)
 VALUES
