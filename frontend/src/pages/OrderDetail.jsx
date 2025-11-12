@@ -74,7 +74,15 @@ export default function OrderDetail() {
   useEffect(() => { Orders.get(id).then(setData) }, [id])
 
   const order = data?.order
-  const items = data?.items ?? []
+  const items = useMemo(
+    () =>
+      (data?.items ?? []).map((item) => ({
+        ...item,
+        unit_price: item.unit_price ?? item.unitPrice ?? null,
+        line_total: item.line_total ?? item.lineTotal ?? null,
+      })),
+    [data],
+  )
   const mechanics = data?.mechanics ?? []
   const odometerValue = order?.odometer
   const formattedOdometer = odometerValue === null || odometerValue === undefined
