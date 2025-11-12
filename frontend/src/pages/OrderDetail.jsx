@@ -21,7 +21,54 @@ export default function OrderDetail() {
       renderCell: (p) => <Chip size="small" label={p.value} variant="outlined" />,
     },
     { field: 'name_snapshot', headerName: 'Name', flex: 1.4, minWidth: 220 },
-    { field: 'qty', headerName: 'Qty', flex: 0.5, minWidth: 80, align: 'right', headerAlign: 'right' },
+    {
+      field: 'qty',
+      headerName: 'Qty',
+      flex: 0.5,
+      minWidth: 80,
+      align: 'right',
+      headerAlign: 'right',
+      valueFormatter: ({ value }) => {
+        const num = Number(value)
+        if (!Number.isFinite(num)) return '—'
+        return num.toLocaleString(undefined, {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 2,
+        })
+      },
+    },
+    {
+      field: 'unit_price',
+      headerName: 'Price',
+      flex: 0.6,
+      minWidth: 110,
+      align: 'right',
+      headerAlign: 'right',
+      valueFormatter: ({ value }) => {
+        const num = Number(value)
+        if (!Number.isFinite(num)) return '—'
+        return num.toLocaleString(undefined, {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })
+      },
+    },
+    {
+      field: 'line_total',
+      headerName: 'Amount',
+      flex: 0.7,
+      minWidth: 120,
+      align: 'right',
+      headerAlign: 'right',
+      valueFormatter: ({ value }) => {
+        const num = Number(value)
+        if (!Number.isFinite(num)) return '—'
+        return num.toLocaleString(undefined, {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })
+      },
+    },
   ]), [])
 
   useEffect(() => { Orders.get(id).then(setData) }, [id])

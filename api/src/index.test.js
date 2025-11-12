@@ -56,7 +56,7 @@ describe('fetchOrderDetail', () => {
     id: 'order-1',
     order_no: 'SO-1',
   }
-  const itemRecords = [{ id: 'item-1', qty: 2 }]
+  const itemRecords = [{ id: 'item-1', qty: 2, unit_price: 50, line_total: 100 }]
   const mechanicRecords = [{ id: 'm1', name: 'Jane Doe' }]
 
   const createDbMock = (

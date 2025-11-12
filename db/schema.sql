@@ -140,6 +140,8 @@ CREATE TABLE
     part_id TEXT REFERENCES parts (id),
     type TEXT NOT NULL, -- 'goods', 'service', or 'part'
     qty REAL NOT NULL,
+    unit_price REAL NOT NULL DEFAULT 0,
+    line_total REAL NOT NULL DEFAULT 0,
     CHECK (
       (
         goods_id IS NOT NULL

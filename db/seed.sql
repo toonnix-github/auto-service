@@ -242,10 +242,12 @@ INSERT INTO
     service_id,
     part_id,
     type,
-    qty
+    qty,
+    unit_price,
+    line_total
   )
 VALUES
-  ('i1', 'o1', 1, 'g0000001', NULL, NULL, 'goods', 1),
+  ('i1', 'o1', 1, 'g0000001', NULL, NULL, 'goods', 1, 1200, 1200),
   (
     'i2',
     'o1',
@@ -254,9 +256,11 @@ VALUES
     's0000001',
     NULL,
     'service',
-    1
+    1,
+    500,
+    500
   ),
-  ('i3', 'o1', 3, NULL, NULL, 'p0000001', 'part', 2);
+  ('i3', 'o1', 3, NULL, NULL, 'p0000001', 'part', 2, 5, 10);
 
 -- ช่างในใบสั่งซ่อม
 INSERT INTO
