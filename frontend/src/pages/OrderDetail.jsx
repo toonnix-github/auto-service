@@ -4,6 +4,9 @@ import { useParams, Link } from 'react-router-dom'
 import { Orders } from '../lib/api'
 import { Box, Card, Stack, Typography, Chip, Button, Grid, CircularProgress } from '@mui/material'
 import { DataGrid } from '@mui/x-data-grid'
+import { currencyFormatter, quantityFormatter, normalizeOrderItems } from './orderDetailUtils.js'
+
+const shouldDisableVirtualization = Boolean(globalThis?.__DISABLE_DATA_GRID_VIRTUALIZATION__)
 
 export default function OrderDetail() {
   const { id } = useParams()
@@ -28,14 +31,8 @@ export default function OrderDetail() {
       minWidth: 80,
       align: 'right',
       headerAlign: 'right',
-      valueFormatter: ({ value }) => {
-        const num = Number(value)
-        if (!Number.isFinite(num)) return '—'
-        return num.toLocaleString(undefined, {
-          minimumFractionDigits: 0,
-          maximumFractionDigits: 2,
-        })
-      },
+      valueGetter: ({ value }) => value ?? null,
+      valueFormatter: ({ value }) => quantityFormatter(value),
     },
     {
       field: 'unit_price',
@@ -44,14 +41,8 @@ export default function OrderDetail() {
       minWidth: 110,
       align: 'right',
       headerAlign: 'right',
-      valueFormatter: ({ value }) => {
-        const num = Number(value)
-        if (!Number.isFinite(num)) return '—'
-        return num.toLocaleString(undefined, {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        })
-      },
+      valueGetter: ({ row, value }) => (value ?? row.unitPrice ?? row.unit_price ?? null),
+      valueFormatter: ({ value }) => currencyFormatter(value),
     },
     {
       field: 'line_total',
@@ -60,29 +51,15 @@ export default function OrderDetail() {
       minWidth: 120,
       align: 'right',
       headerAlign: 'right',
-      valueFormatter: ({ value }) => {
-        const num = Number(value)
-        if (!Number.isFinite(num)) return '—'
-        return num.toLocaleString(undefined, {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        })
-      },
+      valueGetter: ({ row, value }) => (value ?? row.lineTotal ?? row.line_total ?? null),
+      valueFormatter: ({ value }) => currencyFormatter(value),
     },
   ]), [])
 
   useEffect(() => { Orders.get(id).then(setData) }, [id])
 
   const order = data?.order
-  const items = useMemo(
-    () =>
-      (data?.items ?? []).map((item) => ({
-        ...item,
-        unit_price: item.unit_price ?? item.unitPrice ?? null,
-        line_total: item.line_total ?? item.lineTotal ?? null,
-      })),
-    [data],
-  )
+  const items = useMemo(() => normalizeOrderItems(data?.items ?? []), [data])
   const mechanics = data?.mechanics ?? []
   const odometerValue = order?.odometer
   const formattedOdometer = odometerValue === null || odometerValue === undefined
@@ -189,6 +166,7 @@ export default function OrderDetail() {
               initialState={{
                 pagination: { paginationModel: { pageSize: 10, page: 0 } },
               }}
+              disableVirtualization={shouldDisableVirtualization}
               sx={{
                 borderRadius: 2,
                 flex: 1,
@@ -216,7 +194,7 @@ export default function OrderDetail() {
 function TotalBlock({ label, value, strong, loading }) {
   const content = loading
     ? <SkeletonLine width={80} />
-    : (Number(value).toLocaleString(undefined, { minimumFractionDigits: 2 }))
+    : currencyFormatter(value)
   return (
     <Stack alignItems="flex-end">
       <Typography variant="body2" color="text.secondary">{label}</Typography>
