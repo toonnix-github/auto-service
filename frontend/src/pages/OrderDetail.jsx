@@ -31,8 +31,12 @@ export default function OrderDetail() {
       minWidth: 80,
       align: 'right',
       headerAlign: 'right',
-      valueGetter: ({ value }) => value ?? null,
-      valueFormatter: ({ value }) => quantityFormatter(value),
+      valueGetter: (params) => {
+        if (!params) return null
+        const { value } = params
+        return value ?? null
+      },
+      valueFormatter: (params) => quantityFormatter(params?.value),
     },
     {
       field: 'unit_price',
@@ -41,8 +45,12 @@ export default function OrderDetail() {
       minWidth: 110,
       align: 'right',
       headerAlign: 'right',
-      valueGetter: ({ row, value }) => (value ?? row.unitPrice ?? row.unit_price ?? null),
-      valueFormatter: ({ value }) => currencyFormatter(value),
+      valueGetter: (params) => {
+        if (!params) return null
+        const { row = {}, value } = params
+        return value ?? row.unitPrice ?? row.unit_price ?? null
+      },
+      valueFormatter: (params) => currencyFormatter(params?.value),
     },
     {
       field: 'line_total',
@@ -51,8 +59,12 @@ export default function OrderDetail() {
       minWidth: 120,
       align: 'right',
       headerAlign: 'right',
-      valueGetter: ({ row, value }) => (value ?? row.lineTotal ?? row.line_total ?? null),
-      valueFormatter: ({ value }) => currencyFormatter(value),
+      valueGetter: (params) => {
+        if (!params) return null
+        const { row = {}, value } = params
+        return value ?? row.lineTotal ?? row.line_total ?? null
+      },
+      valueFormatter: (params) => currencyFormatter(params?.value),
     },
   ]), [])
 
