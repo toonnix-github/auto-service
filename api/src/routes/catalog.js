@@ -23,6 +23,18 @@ const parseBoolean = (value) => {
 
 const ITEM_TYPES = new Set(['goods', 'part', 'service'])
 
+const buildCatalogName = ({ name, category, brand, model }) => {
+  const parts = [category, brand, model]
+    .map((value) => (typeof value === 'string' ? value.trim() : ''))
+    .filter((value) => value)
+
+  if (!parts.length) {
+    return name
+  }
+
+  return parts.join(' - ')
+}
+
 export const createCatalogRoutes = () => {
   const catalog = new Hono()
 
@@ -58,9 +70,15 @@ export const createCatalogRoutes = () => {
     }
 
     if (q) {
-      const searchClauses = ['name LIKE ?', 'description LIKE ?', 'brand LIKE ?', 'source_code LIKE ?']
+      const searchClauses = [
+        'name LIKE ?',
+        'description LIKE ?',
+        'brand LIKE ?',
+        'model LIKE ?',
+        'source_code LIKE ?',
+      ]
       where.push(`(${searchClauses.join(' OR ')})`)
-      params.push(`%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`)
+      params.push(`%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`)
     }
 
     const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : ''
@@ -74,6 +92,7 @@ export const createCatalogRoutes = () => {
         name,
         description,
         brand,
+        model,
         category,
         taxable,
         active,
@@ -84,7 +103,13 @@ export const createCatalogRoutes = () => {
     `
 
     const { results } = await c.env.auto_service_db.prepare(sql).bind(...params).all()
-    return c.json({ rows: results })
+    const rows = results
+      .map((row) => ({
+        ...row,
+        name: buildCatalogName(row),
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name))
+    return c.json({ rows })
   })
 
   catalog.get('/items/:id', async (c) => {
@@ -100,6 +125,7 @@ export const createCatalogRoutes = () => {
         name,
         description,
         brand,
+        model,
         category,
         taxable,
         active,
@@ -110,7 +136,7 @@ export const createCatalogRoutes = () => {
     const item = await c.env.auto_service_db.prepare(sql).bind(id).first()
     if (!item) return c.notFound()
 
-    return c.json({ item })
+    return c.json({ item: { ...item, name: buildCatalogName(item) } })
   })
 
   return catalog

@@ -55,6 +55,14 @@ const typeChipColor = (type) => {
 
 const roundCurrency = (value) => Math.round((Number(value) + Number.EPSILON) * 100) / 100
 
+const composeCatalogItemName = (category, brand, model) => {
+  const parts = [category, brand, model]
+    .map((value) => (typeof value === 'string' ? value.trim() : ''))
+    .filter(Boolean)
+
+  return parts.join(' - ')
+}
+
 export default function OrderCreate() {
   const navigate = useNavigate()
 
@@ -172,7 +180,11 @@ export default function OrderCreate() {
     Catalog.list({ active: true })
       .then((data) => {
         if (!active) return
-        setCatalogItems(data?.rows ?? [])
+        const rows = (data?.rows ?? []).map((row) => ({
+          ...row,
+          name: composeCatalogItemName(row.category, row.brand, row.model) || row.name || '',
+        }))
+        setCatalogItems(rows)
         setCatalogError('')
       })
       .catch((error) => {
@@ -229,7 +241,7 @@ export default function OrderCreate() {
     return catalogItems.filter((item) => {
       if (itemTypeFilter && item.item_type !== itemTypeFilter) return false
       if (!query) return true
-      const haystacks = [item.name, item.source_code, item.brand, item.category]
+      const haystacks = [item.name, item.source_code, item.brand, item.model, item.category]
       return haystacks.some((field) => (field || '').toLowerCase().includes(query))
     })
   }, [catalogItems, itemTypeFilter, itemSearch])

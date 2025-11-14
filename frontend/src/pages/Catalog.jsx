@@ -85,6 +85,14 @@ const normalizeBoolean = (value, fallback = false) => {
   return fallback
 }
 
+const composeCatalogItemName = (category, brand, model) => {
+  const parts = [category, brand, model]
+    .map((value) => (typeof value === 'string' ? value.trim() : ''))
+    .filter(Boolean)
+
+  return parts.join(' - ')
+}
+
 const RESOURCE_MAP = {
   goods: {
     fetch: (id) => Goods.get(id),
@@ -121,7 +129,6 @@ export default function CatalogPage() {
   const [formError, setFormError] = useState('')
   const [formValues, setFormValues] = useState({
     item_type: 'goods',
-    name: '',
     source_code: '',
     category: '',
     brand: '',
@@ -147,6 +154,7 @@ export default function CatalogPage() {
       const data = await Catalog.list(params)
       const normalized = (data?.rows ?? []).map((row) => ({
         ...row,
+        name: composeCatalogItemName(row.category, row.brand, row.model) || row.name || '',
         active: !!row.active,
         taxable: !!row.taxable,
       }))
@@ -167,7 +175,6 @@ export default function CatalogPage() {
   const resetForm = useCallback((defaults = {}) => {
     setFormValues({
       item_type: defaults.item_type || 'goods',
-      name: defaults.name || '',
       source_code: defaults.source_code || '',
       category: defaults.category || '',
       brand: defaults.brand || '',
@@ -207,7 +214,6 @@ export default function CatalogPage() {
 
       resetForm({
         item_type: row.item_type,
-        name: item.name || '',
         source_code: item.sku || item.code || '',
         category: item.type || '',
         brand: item.brand || '',
@@ -233,12 +239,13 @@ export default function CatalogPage() {
   }, [formSaving, resetForm, type])
 
   const mapFormToPayload = (itemType, values) => {
-    const name = values.name.trim()
     const category = values.category.trim()
     const sourceCode = values.source_code.trim()
     const description = values.description.trim()
     const brand = values.brand.trim()
     const model = values.model.trim()
+
+    const name = composeCatalogItemName(category, brand, model)
 
     const base = {
       name,
@@ -275,12 +282,6 @@ export default function CatalogPage() {
     const resource = RESOURCE_MAP[itemType]
     if (!resource) {
       setFormError('Unsupported item type')
-      return
-    }
-
-    const name = formValues.name.trim()
-    if (!name) {
-      setFormError('Name is required')
       return
     }
 
@@ -593,25 +594,6 @@ export default function CatalogPage() {
               ))}
             </TextField>
 
-            <TextField
-              label="Name"
-              value={formValues.name}
-              onChange={(event) =>
-                setFormValues((prev) => ({ ...prev, name: event.target.value }))
-              }
-              disabled={formLoading || formSaving}
-              required
-            />
-
-            <TextField
-              label={codeLabel(formValues.item_type)}
-              value={formValues.source_code}
-              onChange={(event) =>
-                setFormValues((prev) => ({ ...prev, source_code: event.target.value }))
-              }
-              disabled={formLoading || formSaving}
-            />
-
             {formValues.item_type === 'goods' ? (
               <TextField
                 select
@@ -655,6 +637,15 @@ export default function CatalogPage() {
               value={formValues.model}
               onChange={(event) =>
                 setFormValues((prev) => ({ ...prev, model: event.target.value }))
+              }
+              disabled={formLoading || formSaving}
+            />
+
+            <TextField
+              label={codeLabel(formValues.item_type)}
+              value={formValues.source_code}
+              onChange={(event) =>
+                setFormValues((prev) => ({ ...prev, source_code: event.target.value }))
               }
               disabled={formLoading || formSaving}
             />
