@@ -1,14 +1,16 @@
 // frontend/src/pages/OrdersList.jsx
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Box, Card, Stack, TextField, Button, Typography, Chip } from '@mui/material'
+import { Box, Card, Stack, TextField, Button, Typography } from '@mui/material'
 import { DataGrid } from '@mui/x-data-grid'
 import { Orders } from '../lib/api'
+import { OrderStatusMenu } from '../components/OrderStatusMenu.jsx'
 
 export default function OrdersList() {
   const [rows, setRows] = useState([])
   const [q, setQ] = useState('')
   const [loading, setLoading] = useState(false)
+  const [statusUpdatingId, setStatusUpdatingId] = useState(null)
   const load = async () => {
     setLoading(true)
     try {
@@ -20,6 +22,24 @@ export default function OrdersList() {
   }
 
   useEffect(() => { load() }, [])
+
+  const handleStatusChange = useCallback(async (orderId, status) => {
+    setStatusUpdatingId(orderId)
+    try {
+      await Orders.updateStatus(orderId, status)
+      setRows((prev) =>
+        prev.map((row) =>
+          row.id === orderId
+            ? { ...row, status }
+            : row,
+        ),
+      )
+    } catch (error) {
+      window.alert(error.message || 'Failed to update status')
+    } finally {
+      setStatusUpdatingId(null)
+    }
+  }, [])
 
   const columns = useMemo(() => ([
     // Date
@@ -44,9 +64,17 @@ export default function OrdersList() {
     {
       field: 'status',
       headerName: 'Status',
-      flex: 0.6,
-      minWidth: 120,
-      renderCell: ({ value }) => value ? <Chip size="small" color="info" label={value} /> : '—',
+      flex: 0.7,
+      minWidth: 150,
+      renderCell: (params) => (
+        <OrderStatusMenu
+          status={params.row.status}
+          size="small"
+          loading={statusUpdatingId === params.row.id}
+          disabled={statusUpdatingId !== null && statusUpdatingId !== params.row.id}
+          onChange={(newStatus) => handleStatusChange(params.row.id, newStatus)}
+        />
+      ),
       sortable: false,
     },
 
@@ -85,7 +113,7 @@ export default function OrdersList() {
         </Button>
       ),
     },
-  ]), [])
+  ]), [handleStatusChange, statusUpdatingId])
 
   return (
     <Stack spacing={2}>

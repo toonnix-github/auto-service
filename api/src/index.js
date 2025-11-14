@@ -126,6 +126,43 @@ app.get('/api/orders/:id', async (c) => {
   return c.json(detail)
 })
 
+app.patch('/api/orders/:id/status', async (c) => {
+  const id = c.req.param('id')
+
+  let payload
+  try {
+    payload = await c.req.json()
+  } catch (error) {
+    return c.json({ message: 'Invalid JSON payload' }, 400)
+  }
+
+  const rawStatus = typeof payload?.status === 'string' ? payload.status.trim().toLowerCase() : ''
+  if (!rawStatus) {
+    return c.json({ message: 'status is required' }, 400)
+  }
+  if (!ORDER_STATUS_SET.has(rawStatus)) {
+    return c.json({ message: 'Invalid status' }, 400)
+  }
+
+  const db = c.env.auto_service_db
+  const existing = await db
+    .prepare('SELECT id FROM orders WHERE id = ?')
+    .bind(id)
+    .first()
+  if (!existing) {
+    return c.notFound()
+  }
+
+  const nowIso = new Date().toISOString()
+  await db
+    .prepare('UPDATE orders SET status = ?, updated_at = ? WHERE id = ?')
+    .bind(rawStatus, nowIso, id)
+    .run()
+
+  const detail = await fetchOrderDetail(db, id)
+  return c.json(detail)
+})
+
 app.post('/api/orders', async (c) => {
   let payload
   try {

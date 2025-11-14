@@ -29,17 +29,10 @@ import Autocomplete from '@mui/material/Autocomplete'
 import CircularProgress from '@mui/material/CircularProgress'
 import Switch from '@mui/material/Switch'
 import { Orders, Customers, Vehicles, Catalog, Mechanics } from '../lib/api'
+import { ORDER_STATUS_OPTIONS } from '../lib/orderStatus.js'
 
 const steps = ['Customer', 'Vehicle', 'Items', 'Review']
 const DEFAULT_VAT_RATE = 0.07
-const ORDER_STATUSES = [
-  { value: 'draft', label: 'Draft' },
-  { value: 'open', label: 'Open' },
-  { value: 'in_progress', label: 'In progress' },
-  { value: 'ready', label: 'Ready' },
-  { value: 'closed', label: 'Closed' },
-  { value: 'cancelled', label: 'Cancelled' },
-]
 
 const ITEM_TYPE_LABEL = {
   goods: 'Goods',
@@ -815,7 +808,7 @@ export default function OrderCreate() {
                     onChange={(event) => setStatus(event.target.value)}
                     sx={{ width: { xs: '100%', sm: 220 } }}
                   >
-                    {ORDER_STATUSES.map((option) => (
+                    {ORDER_STATUS_OPTIONS.map((option) => (
                       <MenuItem key={option.value} value={option.value}>
                         {option.label}
                       </MenuItem>
