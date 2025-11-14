@@ -31,7 +31,7 @@ export default function OrderDetail() {
       minWidth: 80,
       align: 'right',
       headerAlign: 'right',
-      valueFormatter: ({ value } = {}) => quantityFormatter(value),
+      valueFormatter: (value) => quantityFormatter(value),
     },
     {
       field: 'unit_price',
@@ -40,7 +40,7 @@ export default function OrderDetail() {
       minWidth: 110,
       align: 'right',
       headerAlign: 'right',
-      valueFormatter: ({ value } = {}) => currencyFormatter(value),
+      valueFormatter: (value) => currencyFormatter(value),
     },
     {
       field: 'line_total',
@@ -49,7 +49,7 @@ export default function OrderDetail() {
       minWidth: 120,
       align: 'right',
       headerAlign: 'right',
-      valueFormatter: ({ value } = {}) => currencyFormatter(value),
+      valueFormatter: (value) => currencyFormatter(value),
     },
   ]), [])
 
