@@ -67,7 +67,7 @@ export function OrderStatusMenu({
             : {}),
           ...(fullWidth ? { width: '100%' } : {}),
         }}
-        endIcon=
+        endIcon={
           loading
             ? null
             : (
@@ -83,6 +83,7 @@ export function OrderStatusMenu({
                   ▾
                 </Box>
               )
+        }
       >
         {loading ? <CircularProgress size={16} /> : label}
       </Button>
