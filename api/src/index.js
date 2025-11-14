@@ -8,7 +8,15 @@ import { createServiceRoutes } from './routes/services.js'
 import { createCatalogRoutes } from './routes/catalog.js'
 import { createMechanicRoutes } from './routes/mechanics.js'
 
-const ORDER_STATUS_SET = new Set(['draft', 'open', 'in_progress', 'ready', 'closed', 'cancelled'])
+const ORDER_STATUS_SET = new Set([
+  'open',
+  'in_progress',
+  'ready',
+  'on_hold',
+  'wait_for_payment',
+  'closed',
+  'cancelled',
+])
 const ITEM_TYPES = new Set(['goods', 'service', 'part'])
 
 const roundCurrency = (value) => Math.round((Number(value) + Number.EPSILON) * 100) / 100

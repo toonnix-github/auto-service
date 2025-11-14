@@ -101,7 +101,7 @@ CREATE TABLE
     customer_id TEXT NOT NULL REFERENCES customers (id),
     vehicle_id TEXT NOT NULL REFERENCES vehicles (id),
     odometer INTEGER,
-    status TEXT NOT NULL DEFAULT 'open', -- open|draft|in_progress|ready|closed|cancelled
+    status TEXT NOT NULL DEFAULT 'open', -- open|in_progress|ready|on_hold|wait_for_payment|closed|cancelled
     vat_rate REAL NOT NULL DEFAULT 0.07,
     subtotal REAL NOT NULL DEFAULT 0,
     vat REAL NOT NULL DEFAULT 0,
