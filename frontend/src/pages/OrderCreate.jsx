@@ -60,7 +60,7 @@ const composeCatalogItemName = (category, brand, model) => {
     .map((value) => (typeof value === 'string' ? value.trim() : ''))
     .filter(Boolean)
 
-  return parts.join(' - ')
+  return parts.join(' ')
 }
 
 export default function OrderCreate() {

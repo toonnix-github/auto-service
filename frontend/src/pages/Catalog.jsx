@@ -90,7 +90,7 @@ const composeCatalogItemName = (category, brand, model) => {
     .map((value) => (typeof value === 'string' ? value.trim() : ''))
     .filter(Boolean)
 
-  return parts.join(' - ')
+  return parts.join(' ')
 }
 
 const RESOURCE_MAP = {
@@ -387,13 +387,6 @@ export default function CatalogPage() {
             sx={{ fontWeight: 500 }}
           />
         ),
-      },
-      {
-        field: 'category',
-        headerName: 'Category',
-        flex: 0.8,
-        minWidth: 150,
-        valueGetter: (params) => params.value || '—',
       },
       {
         field: 'active',

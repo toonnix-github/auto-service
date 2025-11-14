@@ -32,7 +32,7 @@ const buildCatalogName = ({ name, category, brand, model }) => {
     return name
   }
 
-  return parts.join(' - ')
+  return parts.join(' ')
 }
 
 export const createCatalogRoutes = () => {
