@@ -10,14 +10,18 @@ import {
   DialogContent,
   DialogTitle,
   FormControlLabel,
+  IconButton,
   MenuItem,
   Stack,
   Switch,
   TextField,
+  Tooltip,
   Typography,
 } from '@mui/material'
 import { DataGrid } from '@mui/x-data-grid'
 import { Catalog, Goods, Parts, Services } from '../lib/api'
+import DeleteIcon from '@mui/icons-material/Delete'
+import EditIcon from '@mui/icons-material/Edit'
 
 const TYPE_OPTIONS = [
   { label: 'All types', value: '' },
@@ -348,93 +352,99 @@ export default function CatalogPage() {
     }
   }
 
-  const columns = useMemo(() => ([
-    {
-      field: 'name',
-      headerName: 'Name',
-      flex: 1.4,
-      minWidth: 220,
-    },
-    {
-      field: 'item_type',
-      headerName: 'Type',
-      flex: 0.7,
-      minWidth: 120,
-      renderCell: (params) => (
-        <Chip
-          label={params.value?.charAt(0)?.toUpperCase() + params.value?.slice(1) || 'Unknown'}
-          size="small"
-          color={typeChipColor(params.value)}
-          sx={{ fontWeight: 500 }}
-        />
-      ),
-    },
-    {
-      field: 'brand',
-      headerName: 'Brand',
-      flex: 0.8,
-      minWidth: 150,
-      valueGetter: (params) => params || '—',
-    },
-    {
-      field: 'source_code',
-      headerName: 'Code / SKU',
-      flex: 0.7,
-      minWidth: 160,
-      valueGetter: (params) => params || '—',
-    },
-    {
-      field: 'category',
-      headerName: 'Category',
-      flex: 0.7,
-      minWidth: 150,
-      valueGetter: (params) => params || '—',
-    },
-    {
-      field: 'description',
-      headerName: 'Description',
-      flex: 1.5,
-      minWidth: 260,
-      valueGetter: (params) => params || '—',
-    },
-    {
-      field: 'active',
-      headerName: 'Status',
-      flex: 0.6,
-      minWidth: 140,
-      renderCell: (params) => (
-        <Chip
-          label={params.value ? 'Active' : 'Inactive'}
-          size="small"
-          color={params.value ? 'success' : 'default'}
-          sx={{ fontWeight: 500 }}
-        />
-      ),
-    },
-    {
-      field: 'actions',
-      headerName: '',
-      flex: 0.8,
-      minWidth: 180,
-      sortable: false,
-      filterable: false,
-      renderCell: (params) => (
-        <Stack direction="row" spacing={1}>
-          <Button size="small" variant="outlined" onClick={() => openEditForm(params.row)}>
-            Edit
-          </Button>
-          <Button
+  const columns = useMemo(
+    () => [
+      {
+        field: 'name',
+        headerName: 'Name',
+        flex: 1.4,
+        minWidth: 220,
+      },
+      {
+        field: 'item_type',
+        headerName: 'Type',
+        flex: 0.7,
+        minWidth: 120,
+        renderCell: (params) => (
+          <Chip
+            label={params.value?.charAt(0)?.toUpperCase() + params.value?.slice(1) || 'Unknown'}
             size="small"
-            variant="outlined"
-            color="error"
-            onClick={() => handleDeleteClick(params.row)}
+            color={typeChipColor(params.value)}
+            sx={{ fontWeight: 500 }}
+          />
+        ),
+      },
+      {
+        field: 'category',
+        headerName: 'Category',
+        flex: 0.8,
+        minWidth: 150,
+        valueGetter: (params) => params.value || '—',
+      },
+      {
+        field: 'active',
+        headerName: 'Status',
+        flex: 0.6,
+        minWidth: 140,
+        renderCell: (params) => (
+          <Chip
+            label={params.value ? 'Active' : 'Inactive'}
+            size="small"
+            color={params.value ? 'success' : 'default'}
+            sx={{ fontWeight: 500 }}
+          />
+        ),
+      },
+      {
+        field: 'actions',
+        headerName: '',
+        flex: 0.5,
+        minWidth: 120,
+        sortable: false,
+        filterable: false,
+        align: 'center',
+        headerAlign: 'center',
+        renderCell: (params) => (
+          <Stack
+            direction="row"
+            spacing={0.5}
+            alignItems="center"
+            justifyContent="center"
+            sx={{ width: '100%' }}
           >
-            Delete
-          </Button>
-        </Stack>
-      ),
-    },
-  ]), [handleDeleteClick, openEditForm])
+            <Tooltip title="Edit item">
+              <span>
+                <IconButton
+                  size="small"
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    openEditForm(params.row)
+                  }}
+                >
+                  <EditIcon fontSize="small" />
+                </IconButton>
+              </span>
+            </Tooltip>
+            <Tooltip title="Delete item">
+              <span>
+                <IconButton
+                  size="small"
+                  color="error"
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    handleDeleteClick(params.row)
+                  }}
+                >
+                  <DeleteIcon fontSize="small" />
+                </IconButton>
+              </span>
+            </Tooltip>
+          </Stack>
+        ),
+      },
+    ],
+    [handleDeleteClick, openEditForm]
+  )
 
   return (
     <Stack spacing={2}>
