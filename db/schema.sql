@@ -32,7 +32,6 @@ CREATE TABLE
   IF NOT EXISTS goods (
     id TEXT PRIMARY KEY,
     sku TEXT UNIQUE,
-    name TEXT NOT NULL,
     type TEXT NOT NULL, -- oil|tire|part|other
     description TEXT,
     brand TEXT,
@@ -51,7 +50,6 @@ CREATE TABLE
   IF NOT EXISTS parts (
     id TEXT PRIMARY KEY,
     sku TEXT UNIQUE,
-    name TEXT NOT NULL,
     type TEXT NOT NULL, -- e.g., engine, body, electrical
     description TEXT,
     brand TEXT,
@@ -70,7 +68,6 @@ CREATE TABLE
   IF NOT EXISTS services (
     id TEXT PRIMARY KEY,
     code TEXT UNIQUE, -- e.g., SRV-CHANGE-OIL
-    name TEXT NOT NULL, -- e.g., Change Engine Oil
     type TEXT NOT NULL, -- e.g., maintenance, tire, inspection
     description TEXT,
     brand TEXT,
@@ -175,7 +172,6 @@ SELECT
   'goods' AS item_type,
   g.id AS source_id,
   g.sku AS source_code,
-  g.name,
   g.description,
   g.brand,
   g.model,
@@ -191,7 +187,6 @@ SELECT
   'part' AS item_type,
   p.id AS source_id,
   p.sku AS source_code,
-  p.name,
   p.description,
   p.brand,
   p.model,
@@ -207,7 +202,6 @@ SELECT
   'service' AS item_type,
   s.id AS source_id,
   s.code AS source_code,
-  s.name,
   s.description,
   s.brand,
   s.model,

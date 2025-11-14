@@ -182,7 +182,7 @@ export default function OrderCreate() {
         if (!active) return
         const rows = (data?.rows ?? []).map((row) => ({
           ...row,
-          name: composeCatalogItemName(row.category, row.brand, row.model) || row.name || '',
+          name: composeCatalogItemName(row.category, row.brand, row.model),
         }))
         setCatalogItems(rows)
         setCatalogError('')

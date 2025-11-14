@@ -56,12 +56,24 @@ describe('fetchOrderDetail', () => {
     id: 'order-1',
     order_no: 'SO-1',
   }
-  const itemRecords = [{ id: 'item-1', qty: 2, unit_price: 50, line_total: 100 }]
+  const rawItemRecords = [
+    {
+      id: 'item-1',
+      no: 1,
+      type: 'goods',
+      goods_category: 'oil',
+      goods_brand: 'Mobil',
+      goods_model: '5W-30',
+      qty: 2,
+      unit_price: 50,
+      line_total: 100,
+    },
+  ]
   const mechanicRecords = [{ id: 'm1', name: 'Jane Doe' }]
 
   const createDbMock = (
     order = orderRecord,
-    items = itemRecords,
+    items = rawItemRecords,
     mechanics = mechanicRecords,
   ) => {
     return {
@@ -111,11 +123,21 @@ describe('fetchOrderDetail', () => {
   })
 
   it('returns order with items when found', async () => {
-    const db = createDbMock(orderRecord, itemRecords, mechanicRecords)
+    const db = createDbMock(orderRecord, rawItemRecords, mechanicRecords)
     const detail = await fetchOrderDetail(db, orderRecord.id)
     assert.deepEqual(detail, {
       order: orderRecord,
-      items: itemRecords,
+      items: [
+        {
+          id: 'item-1',
+          no: 1,
+          type: 'goods',
+          qty: 2,
+          unit_price: 50,
+          line_total: 100,
+          name_snapshot: 'oil Mobil 5W-30',
+        },
+      ],
       mechanics: mechanicRecords,
     })
   })

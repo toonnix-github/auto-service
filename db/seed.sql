@@ -42,7 +42,6 @@ INSERT INTO
   goods (
     id,
     sku,
-    name,
     type,
     model,
     description,
@@ -54,7 +53,6 @@ VALUES
   (
     'g0000001',
     'OIL-5W30',
-    'oil โมบิลวัน 5W-30',
     'oil',
     '5W-30',
     'น้ำมันเครื่องสังเคราะห์แท้ 5W-30',
@@ -65,7 +63,6 @@ VALUES
   (
     'g0000002',
     'TIRE-185R14',
-    'tire มิชลิน 185R14',
     'tire',
     '185R14',
     'ยางมาตรฐานขนาด 185R14',
@@ -76,7 +73,6 @@ VALUES
   (
     'g0000003',
     'PART-AIRFILTER',
-    'part โตโยต้า วีออส 1.5',
     'part',
     'วีออส 1.5',
     'กรองอากาศสำหรับเครื่องยนต์ 1.5 ลิตร โตโยต้า',
@@ -87,7 +83,6 @@ VALUES
   (
     'g0000004',
     'MISC-COOLANT',
-    'other คาสตรอล Universal',
     'other',
     'Universal',
     'น้ำยาหล่อเย็นเอนกประสงค์ ขนาด 1 ลิตร',
@@ -101,7 +96,6 @@ INSERT INTO
   parts (
     id,
     sku,
-    name,
     type,
     model,
     description,
@@ -113,7 +107,6 @@ VALUES
   (
     'p0000001',
     'PART-SPKPLUG',
-    'engine เอ็นจีเค ยาริส 1.2',
     'engine',
     'ยาริส 1.2',
     'หัวเทียนมาตรฐานสำหรับเครื่องยนต์ 1.2 ลิตร',
@@ -124,7 +117,6 @@ VALUES
   (
     'p0000002',
     'PART-WIPER',
-    'body บ๊อช วีออส',
     'body',
     'วีออส',
     'ใบปัดน้ำฝนด้านหน้า ขนาด 22 นิ้ว',
@@ -135,7 +127,6 @@ VALUES
   (
     'p0000003',
     'PART-BATTERY',
-    'electrical พานาโซนิค Universal',
     'electrical',
     'Universal',
     'แบตเตอรี่รถยนต์ 12V 45Ah',
@@ -149,7 +140,6 @@ INSERT INTO
   services (
     id,
     code,
-    name,
     type,
     model,
     description,
@@ -161,7 +151,6 @@ VALUES
   (
     's0000001',
     'SRV-CHANGE-OIL',
-    'maintenance Universal',
     'maintenance',
     'Universal',
     'บริการเปลี่ยนน้ำมันเครื่องและกรองน้ำมัน',
@@ -172,7 +161,6 @@ VALUES
   (
     's0000002',
     'SRV-TIRE-ROTATE',
-    'tire Universal',
     'tire',
     'Universal',
     'บริการสลับและถ่วงล้อ',
@@ -183,7 +171,6 @@ VALUES
   (
     's0000003',
     'SRV-INSPECT',
-    'inspection Universal',
     'inspection',
     'Universal',
     'ตรวจเช็กสภาพรถยนต์ 20 จุดสำคัญ',

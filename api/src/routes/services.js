@@ -1,4 +1,5 @@
 import { Hono } from 'hono'
+import { composeCatalogName } from '../utils/catalog.js'
 
 const ensureServicesTable = async (db) => {
   const sql = "SELECT name FROM sqlite_master WHERE type='table' AND name='services'"
@@ -8,13 +9,22 @@ const ensureServicesTable = async (db) => {
   }
 }
 
+const mapServiceRow = (row) =>
+  row
+    ? {
+        ...row,
+        name: composeCatalogName(row.type, row.brand, row.model),
+      }
+    : null
+
 const fetchServiceById = async (db, id) => {
   const sql = `
-    SELECT id, code, name, type, description, brand, model, taxable, active, created_at
+    SELECT id, code, type, description, brand, model, taxable, active, created_at
     FROM services
     WHERE id = ?
   `
-  return db.prepare(sql).bind(id).first()
+  const row = await db.prepare(sql).bind(id).first()
+  return mapServiceRow(row)
 }
 
 const parseBooleanInput = (value) => {
@@ -65,22 +75,23 @@ export const createServiceRoutes = () => {
     }
 
     if (q) {
-      where.push('(code LIKE ? OR name LIKE ? OR type LIKE ? OR brand LIKE ? OR model LIKE ? OR description LIKE ?)')
+      const nameExpression = `TRIM(REPLACE(REPLACE(IFNULL(type, '') || ' ' || IFNULL(brand, '') || ' ' || IFNULL(model, ''), '  ', ' '), '  ', ' '))`
+      where.push(`(${nameExpression} LIKE ? OR code LIKE ? OR type LIKE ? OR brand LIKE ? OR model LIKE ? OR description LIKE ?)`)
       params.push(`%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`)
     }
 
     const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : ''
 
     const sql = `
-      SELECT id, code, name, type, description, brand, model, taxable, active, created_at
+      SELECT id, code, type, description, brand, model, taxable, active, created_at
       FROM services
       ${whereSql}
-      ORDER BY created_at DESC, name ASC
+      ORDER BY type ASC, brand ASC, model ASC, created_at DESC
     `
 
     const { results } = await c.env.auto_service_db.prepare(sql).bind(...params).all()
 
-    return c.json({ rows: results })
+    return c.json({ rows: results.map(mapServiceRow) })
   })
 
   services.get('/:id', async (c) => {
@@ -106,7 +117,6 @@ export const createServiceRoutes = () => {
     const {
       id: providedId,
       code,
-      name,
       type,
       model,
       description,
@@ -114,10 +124,6 @@ export const createServiceRoutes = () => {
       taxable = 1,
       active = 1,
     } = payload || {}
-
-    if (!name) {
-      return c.json({ message: 'name is required' }, 400)
-    }
 
     const taxableParsed = parseBooleanInput(taxable)
     if (taxableParsed.invalid || !taxableParsed.provided) {
@@ -132,16 +138,19 @@ export const createServiceRoutes = () => {
     const id = providedId || crypto.randomUUID()
 
     try {
+      if (!type) {
+        return c.json({ message: 'type is required' }, 400)
+      }
+
       const stmt = `
-        INSERT INTO services (id, code, name, type, description, brand, model, taxable, active)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO services (id, code, type, description, brand, model, taxable, active)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       `
       await c.env.auto_service_db
         .prepare(stmt)
         .bind(
           id,
           code ?? null,
-          name,
           type ?? null,
           description ?? null,
           brand ?? null,
@@ -175,7 +184,6 @@ export const createServiceRoutes = () => {
     const fields = new Map()
 
     if (payload?.code !== undefined) fields.set('code', payload.code ?? null)
-    if (payload?.name !== undefined) fields.set('name', payload.name ?? null)
     if (payload?.type !== undefined) fields.set('type', payload.type ?? null)
 
     if (payload?.description !== undefined) {

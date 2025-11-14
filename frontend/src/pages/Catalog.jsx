@@ -154,7 +154,7 @@ export default function CatalogPage() {
       const data = await Catalog.list(params)
       const normalized = (data?.rows ?? []).map((row) => ({
         ...row,
-        name: composeCatalogItemName(row.category, row.brand, row.model) || row.name || '',
+        name: composeCatalogItemName(row.category, row.brand, row.model),
         active: !!row.active,
         taxable: !!row.taxable,
       }))
@@ -245,10 +245,7 @@ export default function CatalogPage() {
     const brand = values.brand.trim()
     const model = values.model.trim()
 
-    const name = composeCatalogItemName(category, brand, model)
-
     const base = {
-      name,
       description: description || null,
       brand: brand || null,
       model: model || null,
