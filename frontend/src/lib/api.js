@@ -107,6 +107,33 @@ export const Catalog = {
   get: (id) => api(`/catalog/items/${id}`),
 }
 
+const jsonBody = (payload) => ({
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(payload),
+})
+
+const createCrud = (basePath, resourceKey) => ({
+  get: async (id) => {
+    const response = await api(`/${basePath}/${id}`)
+    return response?.[resourceKey] ?? null
+  },
+  create: (payload) =>
+    api(`/${basePath}`, {
+      method: 'POST',
+      ...jsonBody(payload),
+    }),
+  update: (id, payload) =>
+    api(`/${basePath}/${id}`, {
+      method: 'PUT',
+      ...jsonBody(payload),
+    }),
+  remove: (id) => api(`/${basePath}/${id}`, { method: 'DELETE' }),
+})
+
+export const Goods = createCrud('goods', 'goods')
+export const Parts = createCrud('parts', 'part')
+export const Services = createCrud('services', 'service')
+
 export const Mechanics = {
   list: (params = {}) => {
     const qs = new URLSearchParams(params).toString()
