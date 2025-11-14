@@ -31,11 +31,6 @@ export default function OrderDetail() {
       minWidth: 80,
       align: 'right',
       headerAlign: 'right',
-      valueGetter: (params) => {
-        if (!params) return null
-        const { value } = params
-        return value ?? null
-      },
       valueFormatter: (params) => quantityFormatter(params?.value),
     },
     {
@@ -45,11 +40,6 @@ export default function OrderDetail() {
       minWidth: 110,
       align: 'right',
       headerAlign: 'right',
-      valueGetter: (params) => {
-        if (!params) return null
-        const { row = {}, value } = params
-        return value ?? row.unitPrice ?? row.unit_price ?? null
-      },
       valueFormatter: (params) => currencyFormatter(params?.value),
     },
     {
@@ -59,11 +49,6 @@ export default function OrderDetail() {
       minWidth: 120,
       align: 'right',
       headerAlign: 'right',
-      valueGetter: (params) => {
-        if (!params) return null
-        const { row = {}, value } = params
-        return value ?? row.lineTotal ?? row.line_total ?? null
-      },
       valueFormatter: (params) => currencyFormatter(params?.value),
     },
   ]), [])
