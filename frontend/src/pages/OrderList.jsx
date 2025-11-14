@@ -5,12 +5,14 @@ import { Box, Card, Stack, TextField, Button, Typography } from '@mui/material'
 import { DataGrid } from '@mui/x-data-grid'
 import { Orders } from '../lib/api'
 import { OrderStatusMenu } from '../components/OrderStatusMenu.jsx'
+import OrderDetailDialog from '../components/OrderDetailDialog.jsx'
 
 export default function OrdersList() {
   const [rows, setRows] = useState([])
   const [q, setQ] = useState('')
   const [loading, setLoading] = useState(false)
   const [statusUpdatingId, setStatusUpdatingId] = useState(null)
+  const [selectedOrderId, setSelectedOrderId] = useState(null)
   const load = async () => {
     setLoading(true)
     try {
@@ -104,16 +106,29 @@ export default function OrdersList() {
       filterable: false,
       renderCell: (params) => (
         <Button
-          component={Link}
-          to={`/order/${params.row.id}`}
           size="small"
           variant="outlined"
+          onClick={() => setSelectedOrderId(params.row.id)}
         >
           View
         </Button>
       ),
     },
   ]), [handleStatusChange, statusUpdatingId])
+
+  const handleDialogClose = useCallback(() => {
+    setSelectedOrderId(null)
+  }, [])
+
+  const handleDialogStatusChange = useCallback((orderId, status) => {
+    setRows((prev) =>
+      prev.map((row) =>
+        row.id === orderId
+          ? { ...row, status }
+          : row,
+      ),
+    )
+  }, [])
 
   return (
     <Stack spacing={2}>
@@ -179,6 +194,13 @@ export default function OrdersList() {
           />
         </Box>
       </Card>
+
+      <OrderDetailDialog
+        orderId={selectedOrderId}
+        open={selectedOrderId !== null}
+        onClose={handleDialogClose}
+        onStatusChange={handleDialogStatusChange}
+      />
     </Stack>
   )
 }
