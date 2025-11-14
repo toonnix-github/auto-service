@@ -1,7 +1,7 @@
 export const ORDER_STATUS_OPTIONS = [
   { value: 'draft', label: 'ใบงานใหม่' },
-  { value: 'open', label: 'กำลังดำเนินการ' },
-  { value: 'in_progress', label: 'รออะไหล่ / รอสินค้า' },
+  { value: 'in_progress', label: 'กำลังดำเนินการ' },
+  { value: 'open', label: 'รออะไหล่ / รอสินค้า' },
   { value: 'ready', label: 'เสร็จแล้ว (รอชำระ)' },
   { value: 'closed', label: 'ชำระแล้ว' },
   { value: 'cancelled', label: 'ยกเลิก' },
