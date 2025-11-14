@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import PropTypes from 'prop-types'
-import { Box, Card, Stack, Typography, Chip, Grid, CircularProgress } from '@mui/material'
+import { Box, Card, Stack, Typography, Chip, CircularProgress } from '@mui/material'
 import { DataGrid } from '@mui/x-data-grid'
 import { Orders } from '../lib/api'
 import { OrderStatusMenu } from './OrderStatusMenu.jsx'
@@ -122,67 +122,54 @@ export default function OrderDetailContent({ orderId, headerActions = null, onSt
         {headerActions}
       </Stack>
 
-      <Grid container spacing={2}>
-        <Grid item xs={12} md={4}>
-          <Card sx={{ p: 2, minHeight: 96 }}>
-            <Typography variant="subtitle2" color="text.secondary">Customer</Typography>
-            {loading ? <SkeletonLine /> : (
-              <>
-                <Typography fontWeight={600}>{order.customer_name}</Typography>
-                <Typography variant="body2">{order.phone}</Typography>
-              </>
-            )}
-          </Card>
-        </Grid>
-        <Grid item xs={12} md={4}>
-          <Card sx={{ p: 2, minHeight: 96 }}>
-            <Typography variant="subtitle2" color="text.secondary">Vehicle</Typography>
-            {loading ? <SkeletonLine /> : (
-              <>
-                <Typography>{order.brand} {order.model}</Typography>
-                <Typography variant="body2">{order.license_plate}</Typography>
-                {formattedOdometer ? (
-                  <Typography variant="body2">Odometer: {formattedOdometer}</Typography>
-                ) : null}
-              </>
-            )}
-          </Card>
-        </Grid>
-        <Grid item xs={12} md={4}>
-          <Card sx={{ p: 2, minHeight: 96 }}>
-            <Typography variant="subtitle2" color="text.secondary">Status</Typography>
-            {loading ? <SkeletonLine /> : (
-              <>
-                <OrderStatusMenu
-                  status={order.status}
-                  size="small"
-                  fullWidth
-                  loading={statusSaving}
-                  disabled={statusSaving}
-                  onChange={handleStatusChange}
-                />
-                <Typography variant="body2" sx={{ mt: 1 }}>Date: {order.date}</Typography>
-              </>
-            )}
-          </Card>
-        </Grid>
-        <Grid item xs={12}>
-          <Card sx={{ p: 2, minHeight: 96 }}>
-            <Typography variant="subtitle2" color="text.secondary">Mechanics</Typography>
-            {loading ? <SkeletonLine width="40%" /> : (
-              mechanics.length ? (
-                <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ mt: 1 }}>
-                  {mechanics.map((mechanic) => (
-                    <Chip key={mechanic.id} label={mechanic.name} size="small" variant="outlined" />
-                  ))}
-                </Stack>
-              ) : (
-                <Typography variant="body2" sx={{ mt: 1 }}>—</Typography>
-              )
-            )}
-          </Card>
-        </Grid>
-      </Grid>
+      <Box
+        sx={{
+          display: 'grid',
+          gap: 2,
+          gridTemplateColumns: {
+            xs: '1fr',
+            md: 'minmax(0, 2fr) minmax(0, 2fr) minmax(0, 1fr)',
+          },
+        }}
+      >
+        <Card sx={{ p: 2, minHeight: 96 }}>
+          <Typography variant="subtitle2" color="text.secondary">Customer</Typography>
+          {loading ? <SkeletonLine /> : (
+            <>
+              <Typography fontWeight={600}>{order.customer_name}</Typography>
+              <Typography variant="body2">{order.phone}</Typography>
+            </>
+          )}
+        </Card>
+        <Card sx={{ p: 2, minHeight: 96 }}>
+          <Typography variant="subtitle2" color="text.secondary">Vehicle</Typography>
+          {loading ? <SkeletonLine /> : (
+            <>
+              <Typography>{order.brand} {order.model}</Typography>
+              <Typography variant="body2">{order.license_plate}</Typography>
+              {formattedOdometer ? (
+                <Typography variant="body2">Odometer: {formattedOdometer}</Typography>
+              ) : null}
+            </>
+          )}
+        </Card>
+        <Card sx={{ p: 2, minHeight: 96 }}>
+          <Typography variant="subtitle2" color="text.secondary">Status</Typography>
+          {loading ? <SkeletonLine /> : (
+            <>
+              <OrderStatusMenu
+                status={order.status}
+                size="small"
+                fullWidth
+                loading={statusSaving}
+                disabled={statusSaving}
+                onChange={handleStatusChange}
+              />
+              <Typography variant="body2" sx={{ mt: 1 }}>Date: {order.date}</Typography>
+            </>
+          )}
+        </Card>
+      </Box>
 
       <Card sx={{ p: 2 }}>
         <Typography variant="h6" sx={{ mb: 1 }}>Items</Typography>
@@ -228,13 +215,52 @@ export default function OrderDetailContent({ orderId, headerActions = null, onSt
             />
           </Box>
         )}
+      </Card>
 
-        <Stack direction="row" spacing={4} justifyContent="flex-end" sx={{ mt: 2 }}>
+      <Card sx={{ p: 2 }}>
+        <Typography variant="h6" sx={{ mb: 1 }}>Costing</Typography>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={4} justifyContent="flex-end">
           <TotalBlock label="Subtotal" value={order?.subtotal} loading={loading} />
           <TotalBlock label="VAT" value={order?.vat} loading={loading} />
           <TotalBlock label="Total" value={order?.total} loading={loading} strong />
         </Stack>
       </Card>
+
+      <Box
+        sx={{
+          display: 'grid',
+          gap: 2,
+          gridTemplateColumns: {
+            xs: '1fr',
+            md: 'repeat(2, minmax(0, 1fr))',
+          },
+        }}
+      >
+        <Card sx={{ p: 2, minHeight: 96 }}>
+          <Typography variant="subtitle2" color="text.secondary">Mechanics</Typography>
+          {loading ? <SkeletonLine width="40%" /> : (
+            mechanics.length ? (
+              <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ mt: 1 }}>
+                {mechanics.map((mechanic) => (
+                  <Chip key={mechanic.id} label={mechanic.name} size="small" variant="outlined" />
+                ))}
+              </Stack>
+            ) : (
+              <Typography variant="body2" sx={{ mt: 1 }}>—</Typography>
+            )
+          )}
+        </Card>
+        <Card sx={{ p: 2, minHeight: 96 }}>
+          <Typography variant="subtitle2" color="text.secondary">Note</Typography>
+          {loading ? <SkeletonLine width="80%" /> : (
+            order?.notes ? (
+              <Typography variant="body2" sx={{ mt: 1, whiteSpace: 'pre-line' }}>{order.notes}</Typography>
+            ) : (
+              <Typography variant="body2" sx={{ mt: 1 }}>—</Typography>
+            )
+          )}
+        </Card>
+      </Box>
     </Stack>
   )
 }
