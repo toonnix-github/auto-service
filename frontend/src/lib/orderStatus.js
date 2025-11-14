@@ -1,10 +1,10 @@
 export const ORDER_STATUS_OPTIONS = [
-  { value: 'draft', label: 'Draft' },
-  { value: 'open', label: 'Open' },
-  { value: 'in_progress', label: 'In progress' },
-  { value: 'ready', label: 'Ready' },
-  { value: 'closed', label: 'Closed' },
-  { value: 'cancelled', label: 'Cancelled' },
+  { value: 'draft', label: 'ใบงานใหม่' },
+  { value: 'open', label: 'กำลังดำเนินการ' },
+  { value: 'in_progress', label: 'รออะไหล่ / รอสินค้า' },
+  { value: 'ready', label: 'เสร็จแล้ว (รอชำระ)' },
+  { value: 'closed', label: 'ชำระแล้ว' },
+  { value: 'cancelled', label: 'ยกเลิก' },
 ]
 
 const STATUS_LABEL_MAP = ORDER_STATUS_OPTIONS.reduce((acc, option) => {
