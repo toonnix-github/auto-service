@@ -60,6 +60,8 @@ const typeChipColor = (type) => {
   }
 }
 
+const roundCurrency = (value) => Math.round((Number(value) + Number.EPSILON) * 100) / 100
+
 export default function OrderCreate() {
   const navigate = useNavigate()
 
@@ -96,6 +98,7 @@ export default function OrderCreate() {
   const [itemSearch, setItemSearch] = useState('')
   const [selectedCatalogItem, setSelectedCatalogItem] = useState(null)
   const [itemQty, setItemQty] = useState('1')
+  const [itemPrice, setItemPrice] = useState('')
 
   const [mechanicOptions, setMechanicOptions] = useState([])
   const [mechanicLoading, setMechanicLoading] = useState(false)
@@ -238,12 +241,20 @@ export default function OrderCreate() {
     })
   }, [catalogItems, itemTypeFilter, itemSearch])
 
-  const totals = useMemo(() => ({
-    subtotal: null,
-    vat: null,
-    total: null,
-    vatRate: includeVat ? DEFAULT_VAT_RATE : 0,
-  }), [includeVat])
+  const totals = useMemo(() => {
+    const vatRate = includeVat ? DEFAULT_VAT_RATE : 0
+    if (!items.length) {
+      return { subtotal: 0, vat: 0, total: 0, vatRate }
+    }
+    const subtotalRaw = items.reduce(
+      (sum, item) => sum + roundCurrency(Number(item.qty) * Number(item.price ?? 0)),
+      0,
+    )
+    const subtotal = roundCurrency(subtotalRaw)
+    const vat = roundCurrency(subtotal * vatRate)
+    const total = roundCurrency(subtotal + vat)
+    return { subtotal, vat, total, vatRate }
+  }, [items, includeVat])
 
   const handleNext = () => {
     setGlobalError('')
@@ -344,6 +355,15 @@ export default function OrderCreate() {
       setItemDialogError('Quantity must be greater than zero')
       return
     }
+    if (itemPrice === '') {
+      setItemDialogError('Enter a price for the item')
+      return
+    }
+    const priceValue = Number(itemPrice)
+    if (!Number.isFinite(priceValue) || priceValue < 0) {
+      setItemDialogError('Price must be zero or greater')
+      return
+    }
 
     const key = `${selectedCatalogItem.item_type}:${selectedCatalogItem.item_id}`
     setItems((prev) => {
@@ -356,6 +376,7 @@ export default function OrderCreate() {
         name: selectedCatalogItem.name,
         code: selectedCatalogItem.source_code,
         qty: quantity,
+        price: roundCurrency(priceValue),
       }
       if (existingIndex >= 0) {
         const next = [...prev]
@@ -367,6 +388,7 @@ export default function OrderCreate() {
     setItemDialogOpen(false)
     setSelectedCatalogItem(null)
     setItemQty('1')
+    setItemPrice('')
     setItemDialogError('')
   }
 
@@ -374,6 +396,12 @@ export default function OrderCreate() {
     const value = Number(event.target.value)
     if (!Number.isFinite(value) || value <= 0) return
     setItems((prev) => prev.map((item) => (item.key === key ? { ...item, qty: value } : item)))
+  }
+
+  const handleItemPriceChange = (key) => (event) => {
+    const value = Number(event.target.value)
+    if (!Number.isFinite(value) || value < 0) return
+    setItems((prev) => prev.map((item) => (item.key === key ? { ...item, price: roundCurrency(value) } : item)))
   }
 
   const handleRemoveItem = (key) => {
@@ -418,6 +446,7 @@ export default function OrderCreate() {
           type: item.itemType,
           sourceId: item.sourceId,
           qty: item.qty,
+          unitPrice: item.price,
         })),
       }
       if (parsedOdometer !== null) payload.odometer = parsedOdometer
@@ -452,6 +481,8 @@ export default function OrderCreate() {
               <TableCell>Item</TableCell>
               <TableCell>Type</TableCell>
               <TableCell align="right">Qty</TableCell>
+              <TableCell align="right">Price</TableCell>
+              <TableCell align="right">Amount</TableCell>
               {editable ? <TableCell align="right">Actions</TableCell> : null}
             </TableRow>
           </TableHead>
@@ -488,6 +519,26 @@ export default function OrderCreate() {
                   ) : (
                     Number(item.qty).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })
                   )}
+                </TableCell>
+                <TableCell align="right">
+                  {editable ? (
+                    <TextField
+                      value={item.price}
+                      onChange={handleItemPriceChange(item.key)}
+                      type="number"
+                      size="small"
+                      inputProps={{ min: 0, step: 0.01 }}
+                      sx={{ width: 110 }}
+                    />
+                  ) : (
+                    Number(item.price ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                  )}
+                </TableCell>
+                <TableCell align="right">
+                  {roundCurrency(Number(item.qty) * Number(item.price ?? 0)).toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
                 </TableCell>
                 {editable ? (
                   <TableCell align="right">
@@ -626,6 +677,7 @@ export default function OrderCreate() {
                   setItemDialogError('')
                   setSelectedCatalogItem(null)
                   setItemQty('1')
+                  setItemPrice('')
                   setItemSearch('')
                   setItemDialogOpen(true)
                 }}
@@ -987,6 +1039,15 @@ export default function OrderCreate() {
               onChange={(event) => setItemQty(event.target.value)}
               type="number"
               inputProps={{ min: 0.1, step: 0.1 }}
+              InputLabelProps={{ shrink: true }}
+              sx={{ width: { xs: '100%', sm: 200 } }}
+            />
+            <TextField
+              label="Unit price"
+              value={itemPrice}
+              onChange={(event) => setItemPrice(event.target.value)}
+              type="number"
+              inputProps={{ min: 0, step: 0.01 }}
               InputLabelProps={{ shrink: true }}
               sx={{ width: { xs: '100%', sm: 200 } }}
             />

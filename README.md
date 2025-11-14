@@ -54,3 +54,14 @@ wrangler d1 execute auto_service_db --local --file=db/migrations/004_add_mechani
 ```
 
 Re-run the seed file afterwards if you want the demo mechanic records locally.
+
+### Error: `no such column: unit_price`
+
+Run the pricing migration to add the new columns for storing unit prices and
+line totals on order items:
+
+```bash
+wrangler d1 execute auto_service_db --local --file=db/migrations/005_add_order_item_pricing.sql
+```
+
+Apply the same command without `--local` when targeting a remote D1 database.

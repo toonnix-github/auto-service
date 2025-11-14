@@ -50,7 +50,9 @@ const fetchOrderDetail = async (db, id) => {
       oi.no,
       oi.type,
       COALESCE(g.name, s.name, p.name) AS name_snapshot,
-      oi.qty
+      oi.qty,
+      oi.unit_price,
+      oi.line_total
     FROM order_items oi
     LEFT JOIN goods g ON g.id = oi.goods_id
     LEFT JOIN services s ON s.id = oi.service_id
@@ -225,6 +227,8 @@ app.post('/api/orders', async (c) => {
     const type = String(item?.type || '').toLowerCase()
     const sourceId = item?.sourceId
     const qtyNumber = Number(item?.qty)
+    const priceRaw = item?.unitPrice ?? item?.price ?? 0
+    const priceNumber = Number(priceRaw)
 
     if (!ITEM_TYPES.has(type)) {
       return c.json({ message: `Item ${index + 1} has invalid type` }, 400)
@@ -234,6 +238,9 @@ app.post('/api/orders', async (c) => {
     }
     if (!Number.isFinite(qtyNumber) || qtyNumber <= 0) {
       return c.json({ message: `Item ${index + 1} quantity must be greater than zero` }, 400)
+    }
+    if (!Number.isFinite(priceNumber) || priceNumber < 0) {
+      return c.json({ message: `Item ${index + 1} price must be zero or greater` }, 400)
     }
 
     let record
@@ -249,16 +256,22 @@ app.post('/api/orders', async (c) => {
       return c.json({ message: `Item ${index + 1} not found` }, 400)
     }
 
+    const unitPrice = roundCurrency(priceNumber)
+    const lineTotal = roundCurrency(qtyNumber * unitPrice)
     resolvedItems.push({
       type,
       sourceId: record.id,
       qty: qtyNumber,
+      unitPrice,
+      lineTotal,
     })
   }
 
-  const subtotal = 0
-  const vat = 0
-  const total = 0
+  const subtotal = roundCurrency(
+    resolvedItems.reduce((sum, item) => sum + item.lineTotal, 0),
+  )
+  const vat = roundCurrency(subtotal * vatRate)
+  const total = roundCurrency(subtotal + vat)
 
   const orderId = crypto.randomUUID()
   const orderNo = await generateOrderNumber(db, orderDate)
@@ -297,8 +310,19 @@ app.post('/api/orders', async (c) => {
     statements.push(
       db
         .prepare(`
-          INSERT INTO order_items (id, order_id, no, goods_id, service_id, part_id, type, qty)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+          INSERT INTO order_items (
+            id,
+            order_id,
+            no,
+            goods_id,
+            service_id,
+            part_id,
+            type,
+            qty,
+            unit_price,
+            line_total
+          )
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `)
         .bind(
           crypto.randomUUID(),
@@ -309,6 +333,8 @@ app.post('/api/orders', async (c) => {
           item.type === 'part' ? item.sourceId : null,
           item.type,
           item.qty,
+          item.unitPrice,
+          item.lineTotal,
         ),
     )
   }

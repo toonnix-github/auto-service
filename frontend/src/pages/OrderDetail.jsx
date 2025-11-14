@@ -4,6 +4,9 @@ import { useParams, Link } from 'react-router-dom'
 import { Orders } from '../lib/api'
 import { Box, Card, Stack, Typography, Chip, Button, Grid, CircularProgress } from '@mui/material'
 import { DataGrid } from '@mui/x-data-grid'
+import { currencyFormatter, quantityFormatter, normalizeOrderItems } from './orderDetailUtils.js'
+
+const shouldDisableVirtualization = Boolean(globalThis?.__DISABLE_DATA_GRID_VIRTUALIZATION__)
 
 export default function OrderDetail() {
   const { id } = useParams()
@@ -21,13 +24,39 @@ export default function OrderDetail() {
       renderCell: (p) => <Chip size="small" label={p.value} variant="outlined" />,
     },
     { field: 'name_snapshot', headerName: 'Name', flex: 1.4, minWidth: 220 },
-    { field: 'qty', headerName: 'Qty', flex: 0.5, minWidth: 80, align: 'right', headerAlign: 'right' },
+    {
+      field: 'qty',
+      headerName: 'Qty',
+      flex: 0.5,
+      minWidth: 80,
+      align: 'right',
+      headerAlign: 'right',
+      valueFormatter: (value) => quantityFormatter(value),
+    },
+    {
+      field: 'unit_price',
+      headerName: 'Price',
+      flex: 0.6,
+      minWidth: 110,
+      align: 'right',
+      headerAlign: 'right',
+      valueFormatter: (value) => currencyFormatter(value),
+    },
+    {
+      field: 'line_total',
+      headerName: 'Amount',
+      flex: 0.7,
+      minWidth: 120,
+      align: 'right',
+      headerAlign: 'right',
+      valueFormatter: (value) => currencyFormatter(value),
+    },
   ]), [])
 
   useEffect(() => { Orders.get(id).then(setData) }, [id])
 
   const order = data?.order
-  const items = data?.items ?? []
+  const items = useMemo(() => normalizeOrderItems(data?.items ?? []), [data])
   const mechanics = data?.mechanics ?? []
   const odometerValue = order?.odometer
   const formattedOdometer = odometerValue === null || odometerValue === undefined
@@ -134,6 +163,7 @@ export default function OrderDetail() {
               initialState={{
                 pagination: { paginationModel: { pageSize: 10, page: 0 } },
               }}
+              disableVirtualization={shouldDisableVirtualization}
               sx={{
                 borderRadius: 2,
                 flex: 1,
@@ -161,7 +191,7 @@ export default function OrderDetail() {
 function TotalBlock({ label, value, strong, loading }) {
   const content = loading
     ? <SkeletonLine width={80} />
-    : (Number(value).toLocaleString(undefined, { minimumFractionDigits: 2 }))
+    : currencyFormatter(value)
   return (
     <Stack alignItems="flex-end">
       <Typography variant="body2" color="text.secondary">{label}</Typography>
