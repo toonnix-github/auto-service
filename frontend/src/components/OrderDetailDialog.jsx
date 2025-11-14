@@ -1,7 +1,6 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { Dialog, DialogContent, IconButton, Stack } from '@mui/material'
-import CloseIcon from '@mui/icons-material/Close'
+import { Button, Dialog, DialogContent, Stack } from '@mui/material'
 import OrderDetailContent from './OrderDetailContent.jsx'
 
 export default function OrderDetailDialog({ orderId, open, onClose, onStatusChange }) {
@@ -19,9 +18,13 @@ export default function OrderDetailDialog({ orderId, open, onClose, onStatusChan
           onStatusChange={onStatusChange}
           headerActions={(
             <Stack direction="row" spacing={1} alignItems="center">
-              <IconButton aria-label="Close order detail" onClick={onClose} size="small">
-                <CloseIcon />
-              </IconButton>
+              <Button
+                variant="text"
+                size="small"
+                onClick={onClose}
+              >
+                Close
+              </Button>
             </Stack>
           )}
           sx={{ p: { xs: 2, sm: 3 } }}
