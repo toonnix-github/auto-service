@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Button, CircularProgress, Menu, MenuItem } from '@mui/material'
+import { Box, Button, CircularProgress, Menu, MenuItem } from '@mui/material'
 import { ORDER_STATUS_OPTIONS, getOrderStatusLabel } from '../lib/orderStatus.js'
 
 export function OrderStatusMenu({
@@ -53,8 +53,36 @@ export function OrderStatusMenu({
         sx={{
           textTransform: 'none',
           minWidth,
+          justifyContent: 'space-between',
+          gap: 1,
+          ...(variant === 'outlined'
+            ? {
+                borderColor: 'info.main',
+                color: 'info.main',
+                '&:hover': {
+                  borderColor: 'info.dark',
+                  backgroundColor: 'action.hover',
+                },
+              }
+            : {}),
           ...(fullWidth ? { width: '100%' } : {}),
         }}
+        endIcon=
+          loading
+            ? null
+            : (
+                <Box
+                  component="span"
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    fontSize: size === 'small' ? 18 : 20,
+                    lineHeight: 1,
+                  }}
+                >
+                  ▾
+                </Box>
+              )
       >
         {loading ? <CircularProgress size={16} /> : label}
       </Button>
