@@ -246,7 +246,10 @@ export default function OrderCreate() {
     if (!items.length) {
       return { subtotal: 0, vat: 0, total: 0, vatRate }
     }
-    const subtotalRaw = items.reduce((sum, item) => sum + Number(item.qty) * Number(item.price ?? 0), 0)
+    const subtotalRaw = items.reduce(
+      (sum, item) => sum + roundCurrency(Number(item.qty) * Number(item.price ?? 0)),
+      0,
+    )
     const subtotal = roundCurrency(subtotalRaw)
     const vat = roundCurrency(subtotal * vatRate)
     const total = roundCurrency(subtotal + vat)
