@@ -7,6 +7,7 @@ import { createPartRoutes } from './routes/parts.js'
 import { createServiceRoutes } from './routes/services.js'
 import { createCatalogRoutes } from './routes/catalog.js'
 import { createMechanicRoutes } from './routes/mechanics.js'
+import { composeCatalogName } from './utils/catalog.js'
 
 const ORDER_STATUS_SET = new Set([
   'open',
@@ -57,7 +58,15 @@ const fetchOrderDetail = async (db, id) => {
       oi.id,
       oi.no,
       oi.type,
-      COALESCE(g.name, s.name, p.name) AS name_snapshot,
+      g.type AS goods_category,
+      g.brand AS goods_brand,
+      g.model AS goods_model,
+      s.type AS service_category,
+      s.brand AS service_brand,
+      s.model AS service_model,
+      p.type AS part_category,
+      p.brand AS part_brand,
+      p.model AS part_model,
       oi.qty,
       oi.unit_price,
       oi.line_total
@@ -68,7 +77,36 @@ const fetchOrderDetail = async (db, id) => {
     WHERE oi.order_id = ?
     ORDER BY oi.no ASC
   `
-  const items = (await db.prepare(itemsSql).bind(id).all()).results
+  const rawItems = (await db.prepare(itemsSql).bind(id).all()).results
+  const items = rawItems.map((row) => {
+    let category
+    let brand
+    let model
+
+    if (row.type === 'goods') {
+      category = row.goods_category
+      brand = row.goods_brand
+      model = row.goods_model
+    } else if (row.type === 'service') {
+      category = row.service_category
+      brand = row.service_brand
+      model = row.service_model
+    } else if (row.type === 'part') {
+      category = row.part_category
+      brand = row.part_brand
+      model = row.part_model
+    }
+
+    return {
+      id: row.id,
+      no: row.no,
+      type: row.type,
+      qty: row.qty,
+      unit_price: row.unit_price,
+      line_total: row.line_total,
+      name_snapshot: composeCatalogName(category, brand, model),
+    }
+  })
 
   const mechanicsSql = `
     SELECT m.id, m.name

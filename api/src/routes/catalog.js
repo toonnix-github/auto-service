@@ -1,4 +1,5 @@
 import { Hono } from 'hono'
+import { composeCatalogNameFromRow } from '../utils/catalog.js'
 
 const ensureCatalogView = async (db) => {
   const sql = "SELECT name FROM sqlite_master WHERE (type='table' OR type='view') AND name='catalog_items'"
@@ -57,10 +58,11 @@ export const createCatalogRoutes = () => {
       params.push(activeParsed.value ? 1 : 0)
     }
 
+    const nameExpression = `TRIM(REPLACE(REPLACE(IFNULL(category, '') || ' ' || IFNULL(brand, '') || ' ' || IFNULL(model, ''), '  ', ' '), '  ', ' '))`
+
     if (q) {
-      const searchClauses = ['name LIKE ?', 'description LIKE ?', 'brand LIKE ?', 'source_code LIKE ?']
-      where.push(`(${searchClauses.join(' OR ')})`)
-      params.push(`%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`)
+      where.push(`(${nameExpression} LIKE ? OR description LIKE ? OR brand LIKE ? OR model LIKE ? OR source_code LIKE ? OR category LIKE ?)`)
+      params.push(`%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`)
     }
 
     const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : ''
@@ -71,20 +73,26 @@ export const createCatalogRoutes = () => {
         item_type,
         source_id,
         source_code,
-        name,
         description,
         brand,
+        model,
         category,
         taxable,
         active,
         created_at
       FROM catalog_items
       ${whereSql}
-      ORDER BY name ASC
+      ORDER BY category ASC, brand ASC, model ASC
     `
 
     const { results } = await c.env.auto_service_db.prepare(sql).bind(...params).all()
-    return c.json({ rows: results })
+    const rows = results
+      .map((row) => ({
+        ...row,
+        name: composeCatalogNameFromRow(row),
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name))
+    return c.json({ rows })
   })
 
   catalog.get('/items/:id', async (c) => {
@@ -97,9 +105,9 @@ export const createCatalogRoutes = () => {
         item_type,
         source_id,
         source_code,
-        name,
         description,
         brand,
+        model,
         category,
         taxable,
         active,
@@ -110,7 +118,7 @@ export const createCatalogRoutes = () => {
     const item = await c.env.auto_service_db.prepare(sql).bind(id).first()
     if (!item) return c.notFound()
 
-    return c.json({ item })
+    return c.json({ item: { ...item, name: composeCatalogNameFromRow(item) } })
   })
 
   return catalog

@@ -1,4 +1,5 @@
 import { Hono } from 'hono'
+import { composeCatalogName } from '../utils/catalog.js'
 
 const ensureGoodsTable = async (db) => {
   const sql = "SELECT name FROM sqlite_master WHERE type='table' AND name='goods'"
@@ -8,13 +9,22 @@ const ensureGoodsTable = async (db) => {
   }
 }
 
+const mapGoodsRow = (row) =>
+  row
+    ? {
+        ...row,
+        name: composeCatalogName(row.type, row.brand, row.model),
+      }
+    : null
+
 const fetchGoodsById = async (db, id) => {
   const sql = `
-    SELECT g.id, g.sku, g.name, g.type, g.description, g.brand, g.model, g.taxable, g.active, g.created_at
+    SELECT g.id, g.sku, g.type, g.description, g.brand, g.model, g.taxable, g.active, g.created_at
     FROM goods g
     WHERE g.id = ?
   `
-  return db.prepare(sql).bind(id).first()
+  const row = await db.prepare(sql).bind(id).first()
+  return mapGoodsRow(row)
 }
 
 const toBooleanInt = (value, fallback) => {
@@ -63,21 +73,22 @@ export const createGoodsRoutes = () => {
     }
 
     if (q) {
-      where.push('(g.sku LIKE ? OR g.name LIKE ? OR g.type LIKE ? OR g.brand LIKE ? OR g.description LIKE ?)')
-      params.push(`%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`)
+      const nameExpression = `TRIM(REPLACE(REPLACE(IFNULL(g.type, '') || ' ' || IFNULL(g.brand, '') || ' ' || IFNULL(g.model, ''), '  ', ' '), '  ', ' '))`
+      where.push(`(${nameExpression} LIKE ? OR g.sku LIKE ? OR g.type LIKE ? OR g.brand LIKE ? OR g.model LIKE ? OR g.description LIKE ?)`)
+      params.push(`%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`)
     }
 
     const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : ''
 
     const sql = `
-      SELECT g.id, g.sku, g.name, g.type, g.description, g.brand, g.model, g.taxable, g.active, g.created_at
+      SELECT g.id, g.sku, g.type, g.description, g.brand, g.model, g.taxable, g.active, g.created_at
       FROM goods g
       ${whereSql}
-      ORDER BY g.created_at DESC, g.name ASC
+      ORDER BY g.type ASC, g.brand ASC, g.model ASC, g.created_at DESC
     `
 
     const { results } = await c.env.auto_service_db.prepare(sql).bind(...params).all()
-    return c.json({ rows: results })
+    return c.json({ rows: results.map(mapGoodsRow) })
   })
 
   goods.get('/:id', async (c) => {
@@ -100,10 +111,10 @@ export const createGoodsRoutes = () => {
       return c.json({ message: 'Invalid JSON payload' }, 400)
     }
 
-    const { sku, name, type, description, brand, model, taxable = true, active = true } = payload || {}
+    const { sku, type, description, brand, model, taxable = true, active = true } = payload || {}
 
-    if (!name || !type) {
-      return c.json({ message: 'name and type are required' }, 400)
+    if (!type) {
+      return c.json({ message: 'type is required' }, 400)
     }
 
     if (!GOODS_TYPES.has(type)) {
@@ -114,15 +125,14 @@ export const createGoodsRoutes = () => {
 
     try {
       const stmt = `
-        INSERT INTO goods (id, sku, name, type, description, brand, model, taxable, active)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO goods (id, sku, type, description, brand, model, taxable, active)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       `
       await c.env.auto_service_db
         .prepare(stmt)
         .bind(
           id,
           sku ?? null,
-          name,
           type,
           description ?? null,
           brand ?? null,
@@ -159,7 +169,6 @@ export const createGoodsRoutes = () => {
 
     const fields = {
       sku: payload?.sku,
-      name: payload?.name,
       type: payload?.type,
       description: payload?.description,
       brand: payload?.brand,
