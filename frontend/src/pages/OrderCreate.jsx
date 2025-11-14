@@ -279,10 +279,6 @@ export default function OrderCreate() {
   }
 
   const handleCreateCustomer = async () => {
-    if (!customerForm.name.trim()) {
-      setCustomerDialogError('Name is required')
-      return
-    }
     if (!customerForm.phone.trim()) {
       setCustomerDialogError('Phone is required')
       return
@@ -291,10 +287,14 @@ export default function OrderCreate() {
     setCreatingCustomer(true)
     setCustomerDialogError('')
     try {
+      const name = customerForm.name.trim()
+      const phone = customerForm.phone.trim()
       const payload = {
-        name: customerForm.name.trim(),
-        phone: customerForm.phone.trim(),
+        phone,
         email: customerForm.email.trim() || null,
+      }
+      if (name) {
+        payload.name = name
       }
       const result = await Customers.create(payload)
       const created = result?.customer
@@ -571,8 +571,9 @@ export default function OrderCreate() {
               onChange={(_, value) => setCustomer(value)}
               getOptionLabel={(option) => {
                 if (!option) return ''
-                const parts = [option.name]
-                if (option.phone) parts.push(option.phone)
+                const displayName = option.name?.trim() || option.phone || ''
+                const parts = [displayName]
+                if (option.phone && option.phone !== displayName) parts.push(option.phone)
                 return parts.filter(Boolean).join(' • ')
               }}
               isOptionEqualToValue={(option, value) => option.id === value.id}
@@ -598,7 +599,7 @@ export default function OrderCreate() {
             />
             {customer ? (
               <Card variant="outlined" sx={{ p: 2 }}>
-                <Typography fontWeight={600}>{customer.name}</Typography>
+                <Typography fontWeight={600}>{customer.name || customer.phone}</Typography>
                 <Typography variant="body2">Phone: {customer.phone}</Typography>
                 {customer.email ? (
                   <Typography variant="body2">Email: {customer.email}</Typography>
@@ -723,7 +724,7 @@ export default function OrderCreate() {
           <Stack spacing={3}>
             <Card variant="outlined" sx={{ p: 2 }}>
               <Typography variant="subtitle2" color="text.secondary">Customer</Typography>
-              <Typography fontWeight={600}>{customer?.name}</Typography>
+              <Typography fontWeight={600}>{customer?.name || customer?.phone}</Typography>
               <Typography variant="body2">{customer?.phone}</Typography>
               {customer?.email ? (
                 <Typography variant="body2">{customer.email}</Typography>
@@ -893,10 +894,9 @@ export default function OrderCreate() {
           <Stack spacing={2} sx={{ mt: 1 }}>
             {customerDialogError ? <Alert severity="error">{customerDialogError}</Alert> : null}
             <TextField
-              label="Name"
+              label="Name (optional)"
               value={customerForm.name}
               onChange={(event) => setCustomerForm((prev) => ({ ...prev, name: event.target.value }))}
-              required
               InputLabelProps={{ shrink: true }}
             />
             <TextField
@@ -936,7 +936,7 @@ export default function OrderCreate() {
             {vehicleDialogError ? <Alert severity="error">{vehicleDialogError}</Alert> : null}
             {customer ? (
               <Alert severity="info">
-                Vehicle will be linked to <strong>{customer.name}</strong>
+                Vehicle will be linked to <strong>{customer.name || customer.phone}</strong>
               </Alert>
             ) : null}
             <TextField

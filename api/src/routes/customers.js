@@ -76,11 +76,16 @@ export const createCustomerRoutes = () => {
       return c.json({ message: 'Invalid JSON payload' }, 400)
     }
 
-    const { name, phone, email = null } = payload || {}
+    const rawName = typeof payload?.name === 'string' ? payload.name.trim() : ''
+    const rawPhone = typeof payload?.phone === 'string' ? payload.phone.trim() : ''
+    const email = typeof payload?.email === 'string' ? payload.email.trim() || null : null
 
-    if (!name || !phone) {
-      return c.json({ message: 'name and phone are required' }, 400)
+    if (!rawPhone) {
+      return c.json({ message: 'phone is required' }, 400)
     }
+
+    const name = rawName || rawPhone
+    const phone = rawPhone
 
     const id = payload?.id || crypto.randomUUID()
 
