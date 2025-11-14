@@ -58,6 +58,11 @@ export const Orders = {
     method: 'POST',
     body: JSON.stringify(payload),
   }),
+  updateStatus: (id, status) =>
+    api(`/orders/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    }),
 }
 
 export const Vehicles = {

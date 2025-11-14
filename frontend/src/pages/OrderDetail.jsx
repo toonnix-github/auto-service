@@ -1,10 +1,11 @@
 // frontend/src/pages/OrderDetail.jsx
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { Orders } from '../lib/api'
 import { Box, Card, Stack, Typography, Chip, Button, Grid, CircularProgress } from '@mui/material'
 import { DataGrid } from '@mui/x-data-grid'
 import { currencyFormatter, quantityFormatter, normalizeOrderItems } from './orderDetailUtils.js'
+import { OrderStatusMenu } from '../components/OrderStatusMenu.jsx'
 
 const shouldDisableVirtualization = Boolean(globalThis?.__DISABLE_DATA_GRID_VIRTUALIZATION__)
 
@@ -12,6 +13,7 @@ export default function OrderDetail() {
   const { id } = useParams()
   const [data, setData] = useState(null)
   const loading = !data
+  const [statusSaving, setStatusSaving] = useState(false)
 
   // ✅ Always declare hooks in the same order (no early returns before hooks)
   const columns = useMemo(() => ([
@@ -54,6 +56,18 @@ export default function OrderDetail() {
   ]), [])
 
   useEffect(() => { Orders.get(id).then(setData) }, [id])
+
+  const handleStatusChange = useCallback(async (newStatus) => {
+    setStatusSaving(true)
+    try {
+      await Orders.updateStatus(id, newStatus)
+      setData((prev) => (prev ? { ...prev, order: { ...prev.order, status: newStatus } } : prev))
+    } catch (error) {
+      window.alert(error.message || 'Failed to update status')
+    } finally {
+      setStatusSaving(false)
+    }
+  }, [id])
 
   const order = data?.order
   const items = useMemo(() => normalizeOrderItems(data?.items ?? []), [data])
@@ -107,7 +121,14 @@ export default function OrderDetail() {
             <Typography variant="subtitle2" color="text.secondary">Status</Typography>
             {loading ? <SkeletonLine /> : (
               <>
-                <Chip color="info" label={order.status} />
+                <OrderStatusMenu
+                  status={order.status}
+                  size="small"
+                  fullWidth
+                  loading={statusSaving}
+                  disabled={statusSaving}
+                  onChange={handleStatusChange}
+                />
                 <Typography variant="body2" sx={{ mt: 1 }}>Date: {order.date}</Typography>
               </>
             )}
